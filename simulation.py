@@ -3,6 +3,7 @@ import random
 import pandas as pd
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 import numpy as np
 import os
 
@@ -17,6 +18,20 @@ class Farm:
     def start_simulation(self, start_date, end_date):
         for field in self.fields:
             field.plant_plants()
+            ############################################################################################################
+            field.fig, field.ax = plt.subplots()  # Create the plot outside the loop
+            ##Brown, Green, Orange, Yellow
+            cmap = ListedColormap(['#994c00', '#008000', '#FFA500', '#FFFF00'])    
+            field.im = field.ax.imshow(np.zeros((len(field.plants), len(field.plants[0]))), cmap=cmap, interpolation='nearest', vmin=0, vmax=3)
+            plt.colorbar(field.im, ticks=[0, 1, 2, 3], label='Plant Type', format=plt.FuncFormatter(lambda val, loc: ['Empty', 'Crop', 'Fieldvetch', 'Jacobsragwort'][int(val)]))
+            field.ax.grid(True, which='major', color='black', linewidth=1)
+            field.ax.set_xticks(np.arange(-0.5, len(field.plants[0]), 1), minor=False)
+            field.ax.set_yticks(np.arange(-0.5, len(field.plants), 1), minor=False)                
+            # Remove the numbers at the axis
+            field.ax.set_xticklabels([])
+            field.ax.set_yticklabels([]) 
+            plt.ion()  # Turn on interactive mode
+            ############################################################################################################
         hour_step = timedelta(hours=1)
         current_date = start_date
         while current_date <= end_date:
@@ -40,7 +55,7 @@ class Farm:
     def create_field(self, name, length, width, crop, proportion, waterlevel, soiltype):
         field = self.Field(name, length, width, crop, proportion, waterlevel, soiltype)
         self.fields.append(field)
-    class Field:   #### Die field klasse ist ein Teil der Farm Klasse.... Macht das Sinn?
+    class Field:   #### Die Field Klasse ist ein Teil der Farm Klasse.... Macht das Sinn?
         def __init__(self, name, length, width, crop, proportion, waterlevel, soiltype):
             self.name = name
             self.length = length            #length of the field in meters
@@ -97,12 +112,15 @@ class Farm:
                     else:
                         debug_print("Error: Unknown plant type")
             debug_print("###########################")
-            self.plot_plants_on_field()
+            #Update the plot
+            plants_data = self.plot_plants_on_field()
+            self.im.set_data(plants_data)  
+            plt.pause(0.001)  
+
             return self.plants
 
         ### Plot the plants on the field
         def plot_plants_on_field(self):
-            # Convert plant data to a numeric array
             data = np.zeros((len(self.plants), len(self.plants[0])))
             for i in range(len(self.plants)):
                 for j in range(len(self.plants[0])):
@@ -114,19 +132,7 @@ class Farm:
                         data[i][j] = 3 # Set 3 for jacobsragwort
                     elif self.plants[i][j].plant['name'] == 'Empty':
                         data[i][j] = 0  # Set 0 for empty
-            fig, ax = plt.subplots()
-            im = ax.imshow(data, cmap='viridis', interpolation='nearest')
-            plt.colorbar(im, ticks=[0, 1, 2,3], label='Plant Type', format=plt.FuncFormatter(lambda val: ['Empty', 'Crop', 'Fieldvetch','Jacobsragwort'][int(val)]))
-            # Adjust the grid to fit around the tiles
-            ax.grid(True, which='major', color='black', linewidth=1)
-            ax.set_xticks(np.arange(-0.5, len(self.plants[0]), 1), minor=False)
-            ax.set_yticks(np.arange(-0.5, len(self.plants), 1), minor=False)         
-            # Remove the numbers at the axis
-            ax.set_xticklabels([])
-            ax.set_yticklabels([])    
-            plt.show()
-
-
+            return data
 class Crop(Farm):
     def __init__(self,plant,x_coordinate=-1,y_coordinate=-1):
         self.x_coordinate = x_coordinate
@@ -138,10 +144,10 @@ class Crop(Farm):
     ### Function to simulate the growth of the plant
     def grow(self,crop,weatherdata,waterlevel,soiltype):
         if self.plant == 'None' and self.plant == 'Weed':
-            return        
+            return waterlevel   
         #self.check_pests()
         #self.check_illnesses()
-        self.check_overgrwth()
+        #self.check_overgrwth()
 #        wed_factor=self.check_weed_impact(Farm.Field.plants)   
         wtr_factor,soil_water=check_waterlevel(crop,weatherdata,waterlevel,soiltype)
         tmp_factor = check_temperature(crop,weatherdata[4])
@@ -212,9 +218,9 @@ class Crop(Farm):
         return factor
     ### Function to check if the has the required temperature
 def check_temperature(plant,temp):          #is the temperature in the optimal range
-    min_temp = plant["min_growth_temperature"]
-    max_temp = plant["max_growth_temperature"]
-    optimal_temp = plant["optimal_growth_temperature"]
+    min_temp = plant.plant["min_growth_temperature"]
+    max_temp = plant.plant["max_growth_temperature"]
+    optimal_temp = plant.plant["optimal_growth_temperature"]
     if temp == optimal_temp:
         factor = 1
     elif temp >= max_temp:  
@@ -291,7 +297,7 @@ def query_specific_value_by_date(csv_file, query_date, column_name):
         debug_print(f"No data found for the date {query_date}.")
         return None
 
-debug_mode = True
+debug_mode = False
 def debug_print(*args, **kwargs):
     if debug_mode:
         print(*args, **kwargs)
@@ -340,6 +346,10 @@ cut_lettuceCharakteristics = {
 }
 FieldVetchCharacteristics = {
     "name": "Field Vetch",
+    "stage1": {"Kc": 0.3, "depth": 30, "BBCH": 9,"diameter": 0.5},
+    "stage2": {"Kc": 0.6, "depth": 30, "BBCH": 15 ,"diameter": 4},
+    "stage3": {"Kc": 0.8, "depth": 60, "BBCH": 43 ,"diameter": 10},
+    "stage4": {"Kc": 1.0, "depth": 60, "BBCH": 65 ,"diameter": 15},
     "is_weed": True,
     'impact': "Bad",
     'optimal_soil': 'sand',
@@ -356,6 +366,10 @@ FieldVetchCharacteristics = {
 }
 JacobsragwortCharacteristics = {
     "name": "Jacobsragwort",
+    "stage1": {"Kc": 0.3, "depth": 30, "BBCH": 9,"diameter": 0.5},
+    "stage2": {"Kc": 0.6, "depth": 30, "BBCH": 15 ,"diameter": 4},
+    "stage3": {"Kc": 0.8, "depth": 60, "BBCH": 43 ,"diameter": 10},
+    "stage4": {"Kc": 1.0, "depth": 60, "BBCH": 65 ,"diameter": 15},
     "is_weed": True,
     'impact': "Bad",
     'optimal_soil': 'sand',
@@ -452,7 +466,7 @@ farm.create_field(datainput["Fieldname"],
                   datainput["cropproportion"],
                   random.uniform(datainput["soiltype"].PWP/10*datainput["groundthickness"],datainput["soiltype"].FK/10*datainput["groundthickness"]),
                   datainput["soiltype"])
-farm.start_simulation(datetime.strptime("2022-09-30 00:00:00","%Y-%m-%d %H:00:00"), datetime.strptime("2022-09-30 10:00:00","%Y-%m-%d %H:%M:%S"))   ## musst be between 2022-09-30 00:00:00 and 2024-02-29 23:00:00 ## 
+farm.start_simulation(datetime.strptime("2022-09-30 00:00:00","%Y-%m-%d %H:00:00"), datetime.strptime("2022-10-30 10:00:00","%Y-%m-%d %H:%M:%S"))   ## musst be between 2022-09-30 00:00:00 and 2024-02-29 23:00:00 ## 
 
 '''
 Sind Die Klassen so richtig aufgebaut?
