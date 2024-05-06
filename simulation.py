@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 import numpy as np
-import os
 
 ############################################################################################################
 # This file contains the classes and functions that are used to simulate the growth of plants in the field #
@@ -15,25 +14,13 @@ class Farm:
     def __init__(self, name):
         self.name = name
         self.fields = []
+        self.fig, self.ax = plt.subplots()
     def start_simulation(self, start_date, end_date):
+   
         for field in self.fields:
             field.plant_plants()
-            ############################################################################################################
-            field.fig, field.ax = plt.subplots()  # Create the plot outside the loop
-            field.ax.set_title(f'Field {field.name},date: {start_date}')
-
-            ##Brown, Green, Orange, Yellow
-            cmap = ListedColormap(["#994c00", "#008000", "#FFA500", "#FFFF00"])    
-            field.im = field.ax.imshow(np.zeros((len(field.plants), len(field.plants[0]))), cmap=cmap, interpolation='nearest', vmin=0, vmax=3)
-            plt.colorbar(field.im, ticks=[0, 1, 2, 3], label='Plant Type', format=plt.FuncFormatter(lambda val, loc: ['Empty', 'Crop', 'Fieldvetch', 'Jacobsragwort'][int(val)]))
-            field.ax.grid(True, which='major', color='black', linewidth=0.5)
-            field.ax.set_xticks(np.arange(-0.5, len(field.plants[0]), 1), minor=False)
-            field.ax.set_yticks(np.arange(-0.5, len(field.plants), 1), minor=False)                
-            # Remove the numbers at the axis
-            field.ax.set_xticklabels([])
-            field.ax.set_yticklabels([]) 
-            plt.ion()  # Turn on interactive mode
-            ############################################################################################################
+            field.create_plots(self.ax)
+        
         hour_step = timedelta(hours=1)
         current_date = start_date
         while current_date <= end_date:
@@ -49,8 +36,7 @@ class Farm:
                 air_temperature = query_specific_value_by_date(csv_file, query_date, 'Lufttemperatur in °C')
                 wind_speed = query_specific_value_by_date(csv_file, query_date, 'Windstärke in km/h')
                 rain= query_specific_value_by_date(csv_file, query_date, 'Niederschlag in mm')
-                Kc_Value = 1.2
-                weather_data=[date, steanm_pressure, wet_temperature, global_radiation, air_temperature, wind_speed, Kc_Value, rain]
+                weather_data=[date, steanm_pressure, wet_temperature, global_radiation, air_temperature, wind_speed,rain]
                 return weather_data
             for field in self.fields:
                 field.simulate(query_weather_data_by_date('transformed_weather_data.csv',date), field.waterlevel, field.soiltype)
@@ -58,6 +44,8 @@ class Farm:
     def create_field(self, name, length, width, crop, proportion, waterlevel, soiltype):
         field = self.Field(name, length, width, crop, proportion, waterlevel, soiltype)
         self.fields.append(field)
+
+    
     class Field:   #### Die Field Klasse ist ein Teil der Farm Klasse.... Macht das Sinn?
         def __init__(self, name, length, width, crop, proportion, waterlevel, soiltype):
             self.name = name
@@ -69,7 +57,23 @@ class Farm:
             self.harvested_plants = []      #list of harvested plants
             self.waterlevel = waterlevel    #waterlevel in the soil All one Field has one waterlevel which is the same for all plants
             self.soiltype = soiltype        #soiltype of the field
-            debug_print(f'Crop: {crop.plant["name"]}, Proportion: {proportion}, Waterlevel: {waterlevel}, Soiltype: {soiltype.name}')             
+            debug_print(f'Crop: {crop.plant["name"]}, Proportion: {proportion}, Waterlevel: {waterlevel}, Soiltype: {soiltype.name}')
+      
+
+        def create_plots(self, ax):
+            ax.set_title(f'Field {self.name}, date: ')
+            ##Brown, Green, Orange, Yellow
+            cmap = ListedColormap(["#994c00", "#008000", "#FFA500", "#FFFF00"])    
+            self.im = ax.imshow(np.zeros((len(self.plants), len(self.plants[0]))), cmap=cmap, interpolation='nearest', vmin=0, vmax=3)
+            plt.colorbar(self.im, ticks=[0, 1, 2, 3], label='Plant Type', format=plt.FuncFormatter(lambda val, loc: ['Empty', 'Crop', 'Fieldvetch', 'Jacobsragwort'][int(val)]))
+            ax.grid(True, which='major', color='black', linewidth=0.5)
+            ax.set_xticks(np.arange(-0.5, len(self.plants[0]), 1), minor=False)
+            ax.set_yticks(np.arange(-0.5, len(self.plants), 1), minor=False)                
+            # Remove the numbers at the axis
+            ax.set_xticklabels([])
+            ax.set_yticklabels([]) 
+            plt.ion()  # Turn on interactive mode
+
         def plant_plants(self):
             debug_print("##########PLANTING##########")
             for i in range(self.length):    
@@ -134,23 +138,30 @@ class Farm:
                 return self.plants
 
         ### Plot the plants on the field
-        def plot_plants_on_field(self,date):
-            #update the date of the heading
-            self.ax.set_title(f'Field {self.name},date: {date}')
+        def plot_plants_on_field(self, ax):
             data = np.zeros((len(self.plants), len(self.plants[0])))
             for i in range(len(self.plants)):
                 for j in range(len(self.plants[0])):
-                    plant = self.plants[i][j]
-                    if plant.plant['name'] != 'Empty':
-                        radius = plant.calculate_radius_from_bbch()-1
-                        start_x = max(0, i - radius)
-                        end_x = min(len(self.plants), i + radius + 1)
-                        start_y = max(0, j - radius)
-                        end_y = min(len(self.plants[0]), j + radius + 1)
-                        for x in range(start_x, end_x):
-                            for y in range(start_y, end_y):
-                                if (x - i) ** 2 + (y - j) ** 2 <= radius ** 2:
-                                    data[x][y] = 1 if plant.plant['name'] == 'Carrot' else 2 if plant.plant['name'] == 'Field Vetch' else 3
+                    if self.plants[i][j].plant['name'] == 'Empty':
+                        data[i][j] = 0                 
+                    elif self.plants[i][j].plant['name'] == 'Carrot':
+                        radius = self.plants[i][j].calculate_radius_from_bbch()
+                        for x in range(i - radius, i + radius + 1):
+                            for y in range(j - radius, j + radius + 1):
+                                if 0 <= x < len(self.plants) and 0 <= y < len(self.plants[0]) and (x - i) ** 2 + (y - j) ** 2 <= radius ** 2:
+                                    data[x][y] = 1  # Set 1 for crop
+                    elif self.plants[i][j].plant['name'] == 'Field Vetch':
+                        radius = self.plants[i][j].calculate_radius_from_bbch()
+                        for x in range(i - radius, i + radius + 1):
+                            for y in range(j - radius, j + radius + 1):
+                                if 0 <= x < len(self.plants) and 0 <= y < len(self.plants[0]) and (x - i) ** 2 + (y - j) ** 2 <= radius ** 2:
+                                    data[x][y] = 2  # Set 2 for field vetch
+                    elif self.plants[i][j].plant['name'] == 'Jacobsragwort':
+                        radius = self.plants[i][j].calculate_radius_from_bbch()
+                        for x in range(i - radius, i + radius + 1):
+                            for y in range(j - radius, j + radius + 1):
+                                if 0 <= x < len(self.plants) and 0 <= y < len(self.plants[0]) and (x - i) ** 2 + (y - j) ** 2 <= radius ** 2:
+                                    data[x][y] = 3  # Set 3
             return data
 class Crop(Farm):
     def __init__(self,plant,x_coordinate=-1,y_coordinate=-1):
@@ -167,8 +178,8 @@ class Crop(Farm):
         #self.check_illnesses()
         #self.check_overgrwth()
         wed_factor=self.check_weed_impact()   
-        wtr_factor,soil_water=check_waterlevel(self.plant,weatherdata,waterlevel,soiltype)
-        tmp_factor = check_temperature(self.plant,weatherdata[4])
+        wtr_factor,soil_water=self.check_waterlevel(weatherdata,waterlevel,soiltype)
+        tmp_factor = self.check_temperature(weatherdata[4])
         #self.check_fertilization()
         self.bbch += plant_factor*wtr_factor*tmp_factor*wed_factor*random.random()
         self.check_harvest()
@@ -208,7 +219,6 @@ class Crop(Farm):
         stage2 = self.plant["stage2"]
         stage3 = self.plant["stage3"]
         stage4 = self.plant["stage4"]
-        
         if bbch <= stage1["BBCH"]:
             fct = bbch / stage1["BBCH"]
             radius = fct * stage1["radius"]
@@ -273,55 +283,67 @@ class Crop(Farm):
             factor = 1 - weedfactor / 8
         return factor
     ### Function to check if the has the required temperature
-def check_temperature(plant,temp):          #is the temperature in the optimal range
-    min_temp = plant["min_growth_temperature"]
-    max_temp = plant["max_growth_temperature"]
-    optimal_temp = plant["optimal_growth_temperature"]
-    if temp == optimal_temp:
-        factor = 1
-    elif temp >= max_temp:  
-        factor = 0
-    elif temp <= min_temp:
-        factor = 0
-    else:
-        factor = (temp - min_temp) / (max_temp - min_temp)
-    return factor
-### Function to check if the Field has the required water level
-def check_waterlevel(crop,weatherdata,waterlevel,soiltype,soil_thickness=30):
-    date=str(weatherdata[0])
-    date_obj = datetime.strptime(date,"%Y-%m-%d %H:%M:%S")
-    if date_obj.hour % irrigation_frequency == 0:
-        irrigation =irrigation_ammount*irrigation_duration
-    else:
-        irrigation = 0
+    def check_temperature(self,temp):          #is the temperature in the optimal range
+        min_temp = self.plant["min_growth_temperature"]
+        max_temp = self.plant["max_growth_temperature"]
+        optimal_temp = self.plant["optimal_growth_temperature"]
+        if temp == optimal_temp:
+            factor = 1
+        elif temp >= max_temp:  
+            factor = 0
+        elif temp <= min_temp:
+            factor = 0
+        else:
+            factor = (temp - min_temp) / (max_temp - min_temp)
+        return factor
+    ### Function to check if the Field has the required water level
+    def check_waterlevel(self,weatherdata,waterlevel,soiltype,soil_thickness=30):
+        date=str(weatherdata[0])
+        date_obj = datetime.strptime(date,"%Y-%m-%d %H:%M:%S")
+        if date_obj.hour % datainput["irrigation_frequency"] == 0:
+            irrigation =datainput["irrigation_ammount"]*datainput["irrigation_duration"]
+        else:
+            irrigation = 0
 
-    steam_pressure=weatherdata[1]
-    wet_temperature=weatherdata[2]
-    global_radiation=weatherdata[3]
-    air_temperature=weatherdata[4]
-    wind_speed=weatherdata[5]
-    Kc_Value=weatherdata[6]
-    rain=weatherdata[7]
-    Evapotranspiration= (0.480*((steam_pressure/10)/wet_temperature)*((global_radiation/10000)+0.066)*(900/(air_temperature+273))*wind_speed)/(((steam_pressure/10)/wet_temperature)+0.066*(1+0.34*wind_speed))
-    waterusage = Evapotranspiration*Kc_Value
-    waterlevel= waterlevel+rain+irrigation-waterusage
-                                #values per 10 cm of soil
-    if waterlevel>soil_thickness*soiltype.FK/10: #soil is full of water the ovrflow is lost
-        waterlevel=soil_thickness*soiltype.FK/10 #set waterlevel to the maximum
-    elif waterlevel<soil_thickness*soiltype.PWP/10: #soil ist dryed out the Plant cant extract any water
-        waterlevel=soil_thickness*soiltype.PWP/10 #set waterlevel to the minimum
-    optimal_water=crop["optimal_water"]
-    Fk=soiltype.FK/10*30
-    PWP=soiltype.PWP/10*30
-    if waterlevel == optimal_water:
-        factor=1
-    elif waterlevel >= Fk:
-        factor=0
-    elif waterlevel <= PWP:
-        factor=0
-    else:
-        factor=(waterlevel-PWP)/(Fk-PWP)
-    return factor,waterlevel
+        steam_pressure=weatherdata[1]
+        wet_temperature=weatherdata[2]
+        global_radiation=weatherdata[3]
+        air_temperature=weatherdata[4]
+        wind_speed=weatherdata[5]
+        Kc_Value=self.get_kc_value()
+        rain=weatherdata[6]
+        Evapotranspiration= (0.480*((steam_pressure/10)/wet_temperature)*((global_radiation/10000)+0.066)*(900/(air_temperature+273))*wind_speed)/(((steam_pressure/10)/wet_temperature)+0.066*(1+0.34*wind_speed))
+        waterusage = Evapotranspiration*Kc_Value
+        waterlevel= waterlevel+rain+irrigation-waterusage
+                                    #values per 10 cm of soil
+        if waterlevel>soil_thickness*soiltype.FK/10: #soil is full of water the ovrflow is lost
+            waterlevel=soil_thickness*soiltype.FK/10 #set waterlevel to the maximum
+        elif waterlevel<soil_thickness*soiltype.PWP/10: #soil ist dryed out the Plant cant extract any water
+            waterlevel=soil_thickness*soiltype.PWP/10 #set waterlevel to the minimum
+        optimal_water=self.plant["optimal_water"]
+        Fk=soiltype.FK/10*30
+        PWP=soiltype.PWP/10*30
+        if waterlevel == optimal_water:
+            factor=1
+        elif waterlevel >= Fk:
+            factor=0
+        elif waterlevel <= PWP:
+            factor=0
+        else:
+            factor=(waterlevel-PWP)/(Fk-PWP)
+        return factor,waterlevel
+    def get_kc_value(self):
+        if self.bbch <= self.plant["stage1"]["BBCH"]:
+            return self.plant["stage1"]["Kc"]
+        elif self.bbch <= self.plant["stage2"]["BBCH"]:
+            return self.plant["stage2"]["Kc"]
+        elif self.bbch <= self.plant["stage3"]["BBCH"]:
+            return self.plant["stage3"]["Kc"]
+        elif self.bbch <= self.plant["stage4"]["BBCH"]:
+            return self.plant["stage4"]["Kc"]
+        else:
+            print("Error: Unknown BBCH value")
+            return 0
 class SoilType:
     def __init__(self,name,nKF,FK,PWP,category):
         self.name =name #Name of the soil
@@ -351,8 +373,8 @@ def query_specific_value_by_date(csv_file, query_date, column_name):
         debug_print(f"No data found for the date {query_date}.")
         return None
 
-debug_mode = False
 def debug_print(*args, **kwargs):
+    debug_mode = datainput["debugmode"]
     if debug_mode:
         print(*args, **kwargs)
 ############################################################################################################
@@ -494,16 +516,9 @@ silty_clay=SoilType("Silty Clay",22,40,10,"medium")
 clayey_loam=SoilType("Clayey Loam",17,40,10,"heavy")
 clay=SoilType("Clay",14,60,25,"heavy")
 peat=SoilType("Peat",30,60,25,"heavy")
-
-
 ############################################################################################################
 #Input data
 ############################################################################################################
-debugmode = False
-soil_water_contend = 0.5
-irrigation_ammount = 0.05 #mm/irrigation
-irrigation_frequency = 7 # 1 times evry 7 hours
-irrigation_duration = 1 #h
 datainput= {
     "Farmname":"MyFarm",
     "Fieldname":"Field_001",
@@ -514,7 +529,11 @@ datainput= {
     "soiltype":silty_clay,
     "groundthickness": 30,
     "startdate": "2022-09-30 00:00:00",
-    "enddate": "2022-10-30 05:00:00"
+    "enddate": "2022-10-30 05:00:00",
+    "debugmode": False,
+    "irrigation_ammount" : 0.05, #mm/irrigation
+    "irrigation_frequency" : 7, # 1 times evry 7 hours
+    "irrigation_duration" : 1 #h
 }
 ############################################################################################################
 #Simulation
@@ -527,12 +546,17 @@ farm.create_field(datainput["Fieldname"],
                   datainput["cropproportion"],
                   random.uniform(datainput["soiltype"].PWP/10*datainput["groundthickness"],datainput["soiltype"].FK/10*datainput["groundthickness"]),
                   datainput["soiltype"])
-farm.start_simulation(datetime.strptime("2022-09-30 00:00:00","%Y-%m-%d %H:00:00"), datetime.strptime("2022-12-30 10:00:00","%Y-%m-%d %H:%M:%S"))   ## musst be between 2022-09-30 00:00:00 and 2024-02-29 23:00:00 ## 
-
+farm.create_field("Field_002",
+                  datainput["length"],
+                  datainput["width"],
+                  datainput["crop"],
+                  datainput["cropproportion"],
+                  random.uniform(datainput["soiltype"].PWP/10*datainput["groundthickness"],datainput["soiltype"].FK/10*datainput["groundthickness"]),
+                  datainput["soiltype"])
+farm.start_simulation(datetime.strptime(datainput["startdate"],"%Y-%m-%d %H:00:00"), datetime.strptime(datainput["enddate"],"%Y-%m-%d %H:%M:%S"))   ## musst be between 2022-09-30 00:00:00 and 2024-02-29 23:00:00 ## 
 '''
 Sind Die Klassen so richtig aufgebaut?
 Sollten klassen aufgeteilt werden, bzw. zusammengefasst werden?
 Welche Funktionen sollten in die klassen aufgenommen werden, macht es Sinn funktionen aus klassen auszulagern?
 Wie speichere ich die Daten der Pflanzen am besten?
-
 '''
