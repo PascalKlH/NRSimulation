@@ -14,12 +14,26 @@ class Farm:
     def __init__(self, name):
         self.name = name
         self.fields = []
-        self.fig, self.ax = plt.subplots()
     def start_simulation(self, start_date, end_date):
    
         for field in self.fields:
             field.plant_plants()
-            field.create_plots(self.ax)
+            ############################################################################################################
+            field.fig, field.ax = plt.subplots()  # Create the plot outside the loop
+            field.ax.set_title(f'Field {field.name},date: {start_date}')
+
+            ##Brown, Green, Orange, Yellow
+            cmap = ListedColormap(["#994c00", "#008000", "#FFA500", "#FFFF00"])    
+            field.im = field.ax.imshow(np.zeros((len(field.plants), len(field.plants[0]))), cmap=cmap, interpolation='nearest', vmin=0, vmax=3)
+            plt.colorbar(field.im, ticks=[0, 1, 2, 3], label='Plant Type', format=plt.FuncFormatter(lambda val, loc: ['Empty', 'Crop', 'Fieldvetch', 'Jacobsragwort'][int(val)]))
+            field.ax.grid(True, which='major', color='black', linewidth=0.5)
+            field.ax.set_xticks(np.arange(-0.5, len(field.plants[0]), 1), minor=False)
+            field.ax.set_yticks(np.arange(-0.5, len(field.plants), 1), minor=False)                
+            # Remove the numbers at the axis
+            field.ax.set_xticklabels([])
+            field.ax.set_yticklabels([]) 
+            plt.ion()  # Turn on interactive mode
+            ############################################################################################################
         
         hour_step = timedelta(hours=1)
         current_date = start_date
@@ -60,19 +74,7 @@ class Farm:
             debug_print(f'Crop: {crop.plant["name"]}, Proportion: {proportion}, Waterlevel: {waterlevel}, Soiltype: {soiltype.name}')
       
 
-        def create_plots(self, ax):
-            ax.set_title(f'Field {self.name}, date: ')
-            ##Brown, Green, Orange, Yellow
-            cmap = ListedColormap(["#994c00", "#008000", "#FFA500", "#FFFF00"])    
-            self.im = ax.imshow(np.zeros((len(self.plants), len(self.plants[0]))), cmap=cmap, interpolation='nearest', vmin=0, vmax=3)
-            plt.colorbar(self.im, ticks=[0, 1, 2, 3], label='Plant Type', format=plt.FuncFormatter(lambda val, loc: ['Empty', 'Crop', 'Fieldvetch', 'Jacobsragwort'][int(val)]))
-            ax.grid(True, which='major', color='black', linewidth=0.5)
-            ax.set_xticks(np.arange(-0.5, len(self.plants[0]), 1), minor=False)
-            ax.set_yticks(np.arange(-0.5, len(self.plants), 1), minor=False)                
-            # Remove the numbers at the axis
-            ax.set_xticklabels([])
-            ax.set_yticklabels([]) 
-            plt.ion()  # Turn on interactive mode
+
 
         def plant_plants(self):
             debug_print("##########PLANTING##########")
@@ -99,13 +101,14 @@ class Farm:
         def weeding(self,date):
             intervall = 10
             if date.day % intervall == 0:
-                for row in self.plants:
-                    for plant in row:
-                        if plant.plant['name'] in Weed_list:
-                            if random.randint(0,100) < 50:
-                                plant.plant = {'name':'Empty'}
-                                plant.bbch = 0
-                                debug_print(f'{plant.plant["name"]} at x:{plant.x_coordinate}, y:{plant.y_coordinate}')
+                if date.hour == 0:
+                    for row in self.plants:
+                        for plant in row:
+                            if plant.plant['name'] in Weed_list:
+                                if random.randint(0,100) < 50:
+                                    plant.plant = {'name':'Empty'}
+                                    plant.bbch = 0
+                                    debug_print(f'{plant.plant["name"]} at x:{plant.x_coordinate}, y:{plant.y_coordinate}')
 
         def simulate(self, weatherdata, waterlevel, soiltype):
             for row in self.plants:
@@ -137,31 +140,31 @@ class Farm:
                 plt.pause(0.01)
                 return self.plants
 
-        ### Plot the plants on the field
-        def plot_plants_on_field(self, ax):
+            #Update the plot
+            if datetime.strptime(weatherdata[0],"%Y-%m-%d %H:%M:%S").hour % 24 == 0:
+                plants_data = self.plot_plants_on_field(weatherdata[0])
+                self.im.set_data(plants_data)  
+                plt.pause(0.01)
+                return self.plants
+        
+           ### Plot the plants on the field
+        def plot_plants_on_field(self,date):
             data = np.zeros((len(self.plants), len(self.plants[0])))
+            #create a heading with the current date
+            self.ax.set_title(f'Field {self.name},date: {date}')
             for i in range(len(self.plants)):
                 for j in range(len(self.plants[0])):
-                    if self.plants[i][j].plant['name'] == 'Empty':
-                        data[i][j] = 0                 
-                    elif self.plants[i][j].plant['name'] == 'Carrot':
-                        radius = self.plants[i][j].calculate_radius_from_bbch()
-                        for x in range(i - radius, i + radius + 1):
-                            for y in range(j - radius, j + radius + 1):
-                                if 0 <= x < len(self.plants) and 0 <= y < len(self.plants[0]) and (x - i) ** 2 + (y - j) ** 2 <= radius ** 2:
-                                    data[x][y] = 1  # Set 1 for crop
-                    elif self.plants[i][j].plant['name'] == 'Field Vetch':
-                        radius = self.plants[i][j].calculate_radius_from_bbch()
-                        for x in range(i - radius, i + radius + 1):
-                            for y in range(j - radius, j + radius + 1):
-                                if 0 <= x < len(self.plants) and 0 <= y < len(self.plants[0]) and (x - i) ** 2 + (y - j) ** 2 <= radius ** 2:
-                                    data[x][y] = 2  # Set 2 for field vetch
-                    elif self.plants[i][j].plant['name'] == 'Jacobsragwort':
-                        radius = self.plants[i][j].calculate_radius_from_bbch()
-                        for x in range(i - radius, i + radius + 1):
-                            for y in range(j - radius, j + radius + 1):
-                                if 0 <= x < len(self.plants) and 0 <= y < len(self.plants[0]) and (x - i) ** 2 + (y - j) ** 2 <= radius ** 2:
-                                    data[x][y] = 3  # Set 3
+                    plant = self.plants[i][j]
+                    if plant.plant['name'] != 'Empty':
+                        radius = plant.calculate_radius_from_bbch()-1
+                        start_x = max(0, i - radius)
+                        end_x = min(len(self.plants), i + radius + 1)
+                        start_y = max(0, j - radius)
+                        end_y = min(len(self.plants[0]), j + radius + 1)
+                        for x in range(start_x, end_x):
+                            for y in range(start_y, end_y):
+                                if (x - i) ** 2 + (y - j) ** 2 <= radius ** 2:
+                                    data[x][y] = 1 if plant.plant['name'] == 'Carrot' else 2 if plant.plant['name'] == 'Field Vetch' else 3
             return data
 class Crop(Farm):
     def __init__(self,plant,x_coordinate=-1,y_coordinate=-1):
