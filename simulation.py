@@ -35,7 +35,7 @@ class Farm:
                 ticks=[0, 1, 2, 3],
                 label="Plant Type",
                 format=plt.FuncFormatter(
-                    lambda val, loc: ["Empty", "Crop", "Fieldvetch", "Jacobsragwort"][
+                    lambda val, loc: ["Empty", "Crop", "Fieldvetch", "Jacobsragwort",""][
                         int(val)
                     ]
                 ),
@@ -107,7 +107,7 @@ class Farm:
         self.fields.append(field)
 
 
-class Field:  #### Die Field Klasse ist ein Teil der Farm Klasse.... Macht das Sinn?
+class Field:  
     def __init__(self, name, length, width, crop, proportion, waterlevel, soiltype):
         self.name = name
         self.length = length  # length of the field in meters
@@ -155,17 +155,17 @@ class Field:  #### Die Field Klasse ist ein Teil der Farm Klasse.... Macht das S
         debug_print("###########################")
 
     def weeding(self, date):
-        intervall = 10
+        intervall = 2
         if date.day % intervall == 0:
             if date.hour == 0:
                 for row in self.plants:
                     for plant in row:
-                        if plant.plant["name"] in Weed_list:
+                        if any(plant.plant["name"] == weed.plant["name"] for weed in weed_list):
                             if random.randint(0, 100) < 10 * plant.bbch:
                                 plant.plant = {"name": "Empty"}
                                 plant.bbch = 0
                                 debug_print(
-                                    f'{plant.plant["name"]} at x:{plant.x_coordinate}, y:{plant.y_coordinate}'
+                                    f'Weeded{plant.plant["name"]} at x:{plant.x_coordinate}, y:{plant.y_coordinate}'
                                 )
 
     def simulate(self, weatherdata, field):
@@ -388,7 +388,7 @@ class Crop:
         weed_fct = 1 - (total_overlap / radius)
         if weed_fct < 0:
             weed_fct = 0
-        print(f"weed_fct: {weed_fct}")
+        debug_print(f"weed_fct: {weed_fct}")
         return weed_fct
 
     ### Function to check if the has the required temperature
@@ -558,8 +558,8 @@ cut_lettuceCharakteristics = {
     "plant_distance": 3,
     "optimal_ph": 6,
 }
-FieldVetchCharacteristics = {
-    "name": "Field Vetch",
+FrenchherbCharacteristics  = { ##Franzosenkraut
+    "name": "French Herb",
     "stage1": {"Kc": 0.3, "depth": 30, "BBCH": 9, "radius": 0.5},
     "stage2": {"Kc": 0.6, "depth": 30, "BBCH": 15, "radius": 4},
     "stage3": {"Kc": 0.8, "depth": 60, "BBCH": 43, "radius": 10},
@@ -580,7 +580,7 @@ FieldVetchCharacteristics = {
     "min_growth_temperature": 5,
     "max_growth_temperature": 30,
 }
-JacobsragwortCharacteristics = {
+JacobsragwortCharacteristics = {##Jakobs-Greiskraut
     "name": "Jacobsragwort",
     "stage1": {"Kc": 0.3, "depth": 30, "BBCH": 9, "radius": 0.5},
     "stage2": {"Kc": 0.6, "depth": 30, "BBCH": 15, "radius": 4},
@@ -602,41 +602,115 @@ JacobsragwortCharacteristics = {
     "min_growth_temperature": 5,
     "max_growth_temperature": 30,
 }
-DogChamomileCharacteristics = {
-    "name": "Dog Chamomile",
+thistleCharacteristics  = {##Distel
+    "name": "Thistle",
+    "stage1": {"Kc": 0.3, "depth": 30, "BBCH": 9, "radius": 0.5},
+    "stage2": {"Kc": 0.6, "depth": 30, "BBCH": 15, "radius": 4},
+    "stage3": {"Kc": 0.8, "depth": 60, "BBCH": 43, "radius": 10},
+    "stage4": {"Kc": 1.0, "depth": 60, "BBCH": 65, "radius": 15},
     "is_weed": True,
     "impact": "Bad",
+    "optimal_soil": "sand",
+    "growth_speed": 1.2,  # 0.0391666, #bbch per hour
+    "optimal_water": 45,
+    "optimal_ph": 6,
+    "max_high": 80,  # cm
+    "max_width": 15,  # Radius des Beschatteten Bereichs
+    "waterusage": 0.125,  # mm/Stunde
+    "earliest_appearance": 120,
+    "latest_appearance": 240,
+    "growth_period": 75,  # days
+    "optimal_growth_temperature": 20,
+    "min_growth_temperature": 5,
+    "max_growth_temperature": 30,
+
 }
-ShepherdsPurseCharacteristics = {
-    "name": "Shepherds Purse",
+CouchGrassCharacteristics  = {##Quecke
+    "name": "Couch Grass",
+    "stage1": {"Kc": 0.3, "depth": 30, "BBCH": 9, "radius": 0.5},
+    "stage2": {"Kc": 0.6, "depth": 30, "BBCH": 15, "radius": 4},
+    "stage3": {"Kc": 0.8, "depth": 60, "BBCH": 43, "radius": 10},
+    "stage4": {"Kc": 1.0, "depth": 60, "BBCH": 65, "radius": 15},
     "is_weed": True,
     "impact": "Bad",
+    "optimal_soil": "sand",
+    "growth_speed": 1.2,  # 0.0391666, #bbch per hour
+    "optimal_water": 45,
+    "optimal_ph": 6,
+    "max_high": 80,  # cm
+    "max_width": 15,  # Radius des Beschatteten Bereichs
+    "waterusage": 0.125,  # mm/Stunde
+    "earliest_appearance": 120,
+    "latest_appearance": 240,
+    "growth_period": 75,  # days
+    "optimal_growth_temperature": 20,
+    "min_growth_temperature": 5,
+    "max_growth_temperature": 30,
+
 }
-GoosefootCharacteristics = {"name": "Goosefoot", "is_weed": True, "impact": "Good"}
-BirdKnotweedCharacteristics = {
-    "name": "Bird Knotweed",
+ChickweedCharacteristics  = {##Voegelmiere
+    "name": "Chick weed",
+    "stage1": {"Kc": 0.3, "depth": 30, "BBCH": 9, "radius": 0.5},
+    "stage2": {"Kc": 0.6, "depth": 30, "BBCH": 15, "radius": 4},
+    "stage3": {"Kc": 0.8, "depth": 60, "BBCH": 43, "radius": 10},
+    "stage4": {"Kc": 1.0, "depth": 60, "BBCH": 65, "radius": 15},
     "is_weed": True,
-    "impact": "Good",
+    "impact": "Bad",
+    "optimal_soil": "sand",
+    "growth_speed": 1.2,  # 0.0391666, #bbch per hour
+    "optimal_water": 45,
+    "optimal_ph": 6,
+    "max_high": 80,  # cm
+    "max_width": 15,  # Radius des Beschatteten Bereichs
+    "waterusage": 0.125,  # mm/Stunde
+    "earliest_appearance": 120,
+    "latest_appearance": 240,
+    "growth_period": 75,  # days
+    "optimal_growth_temperature": 20,
+    "min_growth_temperature": 5,
+    "max_growth_temperature": 30,
 }
-ReportCharacteristics = {"name": "Report", "is_weed": True, "impact": "Good"}
+
+ReportCharacteristics = {  ##Melde
+    "name": "Report ",
+    "stage1": {"Kc": 0.3, "depth": 30, "BBCH": 9, "radius": 0.5},
+    "stage2": {"Kc": 0.6, "depth": 30, "BBCH": 15, "radius": 4},
+    "stage3": {"Kc": 0.8, "depth": 60, "BBCH": 43, "radius": 10},
+    "stage4": {"Kc": 1.0, "depth": 60, "BBCH": 65, "radius": 15},
+    "is_weed": True,
+    "impact": "Bad",
+    "optimal_soil": "sand",
+    "growth_speed": 1.2,  # 0.0391666, #bbch per hour
+    "optimal_water": 45,
+    "optimal_ph": 6,
+    "max_high": 80,  # cm
+    "max_width": 15,  # Radius des Beschatteten Bereichs
+    "waterusage": 0.125,  # mm/Stunde
+    "earliest_appearance": 120,
+    "latest_appearance": 240,
+    "growth_period": 75,  # days
+    "optimal_growth_temperature": 20,
+    "min_growth_temperature": 5,
+    "max_growth_temperature": 30,
+}
 ################################################################################################################
 # Crops
-emptyplant = Crop("Empty")
 carrot = Crop(carrotCharakteristics)
 cut_lettuce = Crop(cut_lettuceCharakteristics)
 # Weeds
-Field_vetch = Crop(FieldVetchCharacteristics)
+
+
+
+
+Couchgrass= Crop(CouchGrassCharacteristics)
+Thistle = Crop(thistleCharacteristics)
+Frenchherb = Crop(FrenchherbCharacteristics)
+Chickweed = Crop(ChickweedCharacteristics )
 Jacobsragwort = Crop(JacobsragwortCharacteristics)
-Dog_Chamomile = Crop(DogChamomileCharacteristics)
-Shepherds_Purse = Crop(ShepherdsPurseCharacteristics)
-Goosefoot = Crop(GoosefootCharacteristics)
-Bird_Knotweed = Crop(BirdKnotweedCharacteristics)
-Report = Crop(ReportCharacteristics)
-weed_list = [Field_vetch, Jacobsragwort]
-Weed_list = [
-    "Field Vetch",
-    "Jacobsragwort",
-]  # Jacobsragwort, Dog_Chamomile, Shepherds_Purse, Goosefoot, Bird_Knotweed, Report]
+Report = Crop(ReportCharacteristics )
+weed_list = [Frenchherb, Jacobsragwort, Thistle, Couchgrass, Chickweed, Report]
+
+
 Crop_list = ["Carrot", "cut_lettuce"]
 # Soil
 sand = SoilType("Sand", 9, 15, 1, "light")
@@ -647,6 +721,67 @@ silty_clay = SoilType("Silty Clay", 22, 40, 10, "medium")
 clayey_loam = SoilType("Clayey Loam", 17, 40, 10, "heavy")
 clay = SoilType("Clay", 14, 60, 25, "heavy")
 peat = SoilType("Peat", 30, 60, 25, "heavy")
+#Pests
+aphids = {
+    "name":"Aphids",
+    "period":"01.04-01.11",
+    'majorperiod':'01.05-30.06',
+    "impact":3,
+    "EndangeredCrop":"RedCabage",
+}
+thrips = {
+    "name":"Thrips",
+    "period":"01.06-31.08",
+    'majorperiod':'15.07-15.08',
+    "impact":3,
+    "EndangeredCrop":"WhiteCabage",
+}
+CabbageWhiteButterfly = {
+    "name":"Cabbage White Butterfly",
+    "period":"01.05-15.09",
+    'majorperiod':'01.06-31.07',
+    "impact":2,
+}
+Cabbagefly = {
+    "name":"Cabbagefly",
+    "period":"15.04-15.05",
+    "period":"15.06-15.10",
+    "majorperiod":"15.04-15.05",
+    "impact":3,
+
+}
+#Illnesses
+Bacterialsoftrot = {
+    "name":"Bacterial soft rot",
+    "period":"",
+    "impact":2,
+}
+Leafspot = {
+    "name":"Leaf spot",
+    "period":"",
+    "impact":1,
+}
+#Falscher Mehltau
+Mildew = {
+    "name":" Mildew",
+    "period":"01.05-01.10",
+    "majorperiod":"01.05-01.08",
+    "impact":2,
+}
+#Kohlhernie
+Clubroot = {
+    "name":"Clubroot",
+    "period":"01.05-01.10",
+    "majorperiod":"01.05-01.08",
+    "impact":3,
+}
+#Ringfleckenkrankheit 
+RingSpotDisease = {
+    "name":" Ring spot disease",
+    "period":"01.05-01.10",
+    "majorperiod":"01.05-01.08",
+    "impact":3,
+}
 ############################################################################################################
 # Input data
 ############################################################################################################
@@ -698,10 +833,4 @@ farm.create_field(
 farm.start_simulation(
     datetime.strptime(datainput["startdate"], "%Y-%m-%d %H:00:00"),
     datetime.strptime(datainput["enddate"], "%Y-%m-%d %H:%M:%S"),
-)  ## musst be between 2022-09-30 00:00:00 and 2024-02-29 23:00:00 ##
-"""
-Sind Die Klassen so richtig aufgebaut?
-Sollten klassen aufgeteilt werden, bzw. zusammengefasst werden?
-Welche Funktionen sollten in die klassen aufgenommen werden, macht es Sinn funktionen aus klassen auszulagern?
-Wie speichere ich die Daten der Pflanzen am besten?
-"""
+)
