@@ -17,7 +17,7 @@ class Farm:
 
     def start_simulation(self, start_date, end_date):
         for field in self.fields:
-            field.plant_plants()
+            field.plant_plants(start_date)
             ############################################################################################################
             field.fig, field.ax = plt.subplots()  # Create the plot outside the loop
             field.ax.set_title(f"Field {field.name}, date: {start_date}")
@@ -100,6 +100,11 @@ class Farm:
                     field,
                 )
                 field.weeding(current_date)
+                #End Simulation if all plants are harvested
+                if all(plant.plant in Crop_list for row in field.plants for cell in row for plant in cell):
+                    input("All plants are harvested")
+                    print(field.harvested_plants)
+                    break
         input("Press Enter to close the simulation")
 
     def create_field(self, name, length, width, crop, proportion, waterlevel, soiltype):
@@ -124,156 +129,162 @@ class Field:
             f'Crop: {crop.plant["name"]}, Proportion: {proportion}, Waterlevel: {waterlevel}, Soiltype: {soiltype.name}'
         )
 
-    def plant_plants(self):
+    def plant_plants(self, start_date):
         debug_print("##########PLANTING##########")
+        self.plants = []  # Initialize or clear the field grid
         for i in range(self.length):
             row = []
             debug_print(f"Row {i}")
             for j in range(self.width):
-                if (i % self.crop.plant["row_distance"] == 0 or i == 0) and (
-                    j % self.crop.plant["plant_distance"] == 0 or j == 0
-                ):
+                cell = []
+                if (i % self.crop.plant["row_distance"] == 0 or i == 0) and (j % self.crop.plant["plant_distance"] == 0 or j == 0):
                     if random.random() < self.proportion:
-                        plant = Crop(self.crop.plant, i, j)
-                        row.append(plant)
-                        debug_print(
-                            f' {self.crop.plant["name"]} at x:{plant.x_coordinate}, y:{plant.y_coordinate}'
-                        )
+                        plant = Crop(self.crop.plant, i, j, start_date)
+                        cell.append(plant)
+                        debug_print(f'{self.crop.plant["name"]} at x:{plant.x_coordinate}, y:{plant.y_coordinate}')
                     else:
                         plant = Crop({"name": "Empty"}, i, j)
-                        row.append(plant)
-                        debug_print(
-                            f" Empty at x:{plant.x_coordinate}, y:{plant.y_coordinate}"
-                        )
+                        cell.append(plant)
+                        debug_print(f" Empty at x:{plant.x_coordinate}, y:{plant.y_coordinate}")
                 else:
                     plant = Crop({"name": "Empty"}, i, j)
-                    row.append(plant)
-                    debug_print(
-                        f" Empty at x:{plant.x_coordinate}, y:{plant.y_coordinate}"
-                    )
-            self.plants.append(row)
+                    cell.append(plant)
+                    debug_print(f" Empty at x:{plant.x_coordinate}, y:{plant.y_coordinate}")
+                row.append(cell)  # Append the cell to the row
+            self.plants.append(row)  # Append the row to the field grid
         debug_print("###########################")
 
+
+
+
     def weeding(self, date):
-        intervall = 2
+        intervall = 10
         if date.day % intervall == 0:
             if date.hour == 0:
                 for row in self.plants:
-                    for plant in row:
-                        if any(plant.plant["name"] == weed.plant["name"] for weed in weed_list):
-                            if random.randint(0, 100) < 10 * plant.bbch:
-                                plant.plant = {"name": "Empty"}
-                                plant.bbch = 0
-                                debug_print(
-                                    f'Weeded{plant.plant["name"]} at x:{plant.x_coordinate}, y:{plant.y_coordinate}'
-                                )
+                    for cell in row:
+                        for plant in cell:
+                            if any(plant.plant["name"] == weed.plant["name"] for weed in weed_list):
+                                if random.randint(0, 100) < 10 * plant.bbch:
+                                    # Weeding logic
+                                    radius = plant.calculate_radius_from_bbch()
+                                    for i in range(plant.x_coordinate - radius, plant.x_coordinate + radius + 1):
+                                        for j in range(plant.y_coordinate - radius, plant.y_coordinate + radius + 1):
+                                            if 0 <= i < len(self.plants) and 0 <= j < len(self.plants[0]):
+                                                for weeded_plant in self.plants[i][j]:
+                                                    if weeded_plant.x_coordinate == plant.x_coordinate and weeded_plant.y_coordinate == plant.y_coordinate:
+                                                        weeded_plant.plant = {"name": "Empty"}
+                                                        weeded_plant.bbch = 0
+                                                        weeded_plant.harvested_yields = 0
+                                                        weeded_plant.illnesses = []
+                                                        weeded_plant.pests = {}
+                                                        weeded_plant.sowing_date = -1
+                                                        debug_print(
+                                                            f'Weeded {plant.plant["name"]} at x:{plant.x_coordinate}, y:{plant.y_coordinate}'
+                                                        )
+                                                        break  # Exit loop after updating the plant
 
     def simulate(self, weatherdata, field):
         for row in self.plants:
-            for plant_in_row in row:
-                if plant_in_row.plant["name"] == "Empty":
-                    debug_print(
-                        f"Empty{plant_in_row.plant} at x:{plant_in_row.x_coordinate}, y:{plant_in_row.y_coordinate}"
-                    )
-                    plant_in_row = plant_in_row.weed_germination(weatherdata[0])
-                else:
-                    debug_print(
-                        f"Plant at x:{plant_in_row.x_coordinate}, y:{plant_in_row.y_coordinate}, crop: {plant_in_row.plant['name']}, with BBCH: {round(plant_in_row.bbch,2)}, Waterlevel: {self.waterlevel}, Soiltype: {self.soiltype.name}"
-                    )
-                    soil_water = plant_in_row.grow(weatherdata, field)
-                    self.waterlevel = soil_water
+            for cell in row:
+                for plant_in_cell in cell:
+                    if plant_in_cell.plant["name"] == "Empty":
+                        debug_print(
+                            f"Empty{plant_in_cell.plant} at x:{plant_in_cell.x_coordinate}, y:{plant_in_cell.y_coordinate}"
+                        )
+                        plant_in_cell = plant_in_cell.weed_germination(weatherdata[0])
+                    elif plant_in_cell.plant["name"] != "Empty":
+                        debug_print(
+                            f"Plant at x:{plant_in_cell.x_coordinate}, y:{plant_in_cell.y_coordinate}, crop: {plant_in_cell.plant['name']}, with BBCH: {round(plant_in_cell.bbch,2)}, Waterlevel: {self.waterlevel}, Soiltype: {self.soiltype.name}"
+                        )
+                        soil_water = plant_in_cell.grow(weatherdata, field)
+                        self.waterlevel = soil_water
+                    else:
+                        print(f"Error: Unknown plant type at x:{plant_in_cell.x_coordinate}, y:{plant_in_cell.y_coordinate}")
+
 
         debug_print("###########################")
-        for row in self.plants:
-            for plant_in_row in row:
-                if plant_in_row.plant in Crop_list:
-                    debug_print(
-                        f"Plant at x:{plant_in_row.x_coordinate}, y:{plant_in_row.y_coordinate}, crop: {self.crop.plant['name']}, with BBCH: {round(plant_in_row.bbch,2)}, Waterlevel: {self.waterlevel}, Soiltype: {self.soiltype.name}"
-                    )
-                elif plant_in_row.plant in weed_list:
-                    debug_print(
-                        f"Weed at x:{plant_in_row.x_coordinate}, y:{plant_in_row.y_coordinate}, : {plant_in_row.bbch}, Waterlevel: {self.waterlevel}, Soiltype: {self.soiltype.name}"
-                    )
-                elif plant_in_row.plant == "Empty":
-                    debug_print(
-                        f"{plant_in_row.plant} at x:{plant_in_row.x_coordinate}, y:{plant_in_row.y_coordinate}"
-                    )
-                else:
-                    debug_print("Error: Unknown plant type")
-        debug_print("###########################")
-        # Update the plot
-        if datetime.strptime(weatherdata[0], "%Y-%m-%d %H:%M:%S").hour % 1 == 0:
+        # Update the plot if the hour is 23
+        if datetime.strptime(weatherdata[0], "%Y-%m-%d %H:%M:%S").hour % 23 == 0:
             plants_data = self.plot_plants_on_field(weatherdata[0])
             self.im.set_data(plants_data)
             plt.pause(0.01)
-            return self.plants
+        return self.plants
 
-    ### Plot the plants on the field
     def plot_plants_on_field(self, date):
-        data = np.zeros((len(self.plants), len(self.plants[0])))
-        # create a heading with the current date
-        self.ax.set_title(f"Field {self.name},date: {date}")
-        for i in range(len(self.plants)):
-            for j in range(len(self.plants[0])):
-                plant = self.plants[i][j]
-                if plant.plant["name"] != "Empty":
-                    radius = plant.calculate_radius_from_bbch() - 1
-                    start_x = max(0, i - radius)
-                    end_x = min(len(self.plants), i + radius + 1)
-                    start_y = max(0, j - radius)
-                    end_y = min(len(self.plants[0]), j + radius + 1)
-                    for x in range(start_x, end_x):
-                        for y in range(start_y, end_y):
-                            if (x - i) ** 2 + (y - j) ** 2 <= radius**2:
-                                data[x][y] = (
-                                    1
-                                    if plant.plant["name"] == "Carrot"
-                                    else 2
-                                    if plant.plant["name"] == "Field Vetch"
-                                    else 3
-                                )
-        return data
+            data = np.zeros((len(self.plants), len(self.plants[0])))
+            # Create a heading with the current date
+            self.ax.set_title(f"Field {self.name}, date: {date}")
+            for i in range(len(self.plants)):
+                for j in range(len(self.plants[0])):
+                    # Check each plant in the list at position [i][j]
+                    for plant in self.plants[i][j]:
+                        if plant.plant["name"] != "Empty":
+                            if plant.plant["name"] == "Carrot":
+                                data[i][j] = 1
+                            elif plant.plant["name"] == "Field Vetch":
+                                data[i][j] = 2
+                            else:
+                                data[i][j] = 3
+                            break  # If there's at least one non-empty plant, break the inner loop
+            return data
+
 
 
 class Crop:
-    def __init__(self, plant, x_coordinate=-1, y_coordinate=-1):
+    def __init__(self, plant, x_coordinate=-1, y_coordinate=-1,sow_date =-1):
         self.x_coordinate = x_coordinate
         self.y_coordinate = y_coordinate
         self.plant = plant  ####plant beinhaltet die Spezifischen Parameter der Pflanze, sollte jeder parameter in einem eigenen Attribut gespeichert werden?
         self.bbch = 0
         self.pests = {}
-        self.illnesses = {}
+        self.illnesses = []
+        self.sowing_date = sow_date
+        havested_yields = 0
 
     ### Function to simulate the growth of the plant
     def grow(self, weatherdata, field):
-        plant_factor = self.plant["growth_speed"]
-        # self.check_pests()
-        # self.check_illnesses()
+            plant_factor = self.plant["growth_speed"]
+            self.check_pests(weatherdata)
+            self.check_illnesses(weatherdata, field)
 
-        wed_factor = self.check_weed_impact(field)
-        wtr_factor, soil_water = self.check_waterlevel(
-            weatherdata, field.waterlevel, field.soiltype
-        )
-        tmp_factor = self.check_temperature(weatherdata[4])
-        # self.check_fertilization()
-        self.bbch += (
-            plant_factor * wtr_factor * tmp_factor * wed_factor * random.random()
-        )
-        self.check_harvest()
-        self.check_overgrowth(field)
+            wed_factor = self.check_weed_impact(field)
+            wtr_factor, soil_water = self.check_waterlevel(weatherdata, field.waterlevel, field.soiltype)
+            tmp_factor = self.check_temperature(weatherdata[4])
+            self.bbch += plant_factor * wtr_factor * tmp_factor * wed_factor * random.random()
+            
+            self.check_harvest(weatherdata[0], field)
+            if self.plant["name"] != "Empty":
+                self.check_overgrowth(field)
+            
+            if self.plant["name"] != "Empty":
+                # Fill the Grid with the plant in the radius of the plant in a circular shape
+                radius = self.calculate_radius_from_bbch() - 1
+                for i in range(self.x_coordinate - radius, self.x_coordinate + radius + 1):
+                    for j in range(self.y_coordinate - radius, self.y_coordinate + radius + 1):
+                        if 0 <= i < len(field.plants) and 0 <= j < len(field.plants[0]):
+                            if (i, j) != (self.x_coordinate, self.y_coordinate):
+                                if (i - self.x_coordinate) ** 2 + (j - self.y_coordinate) ** 2 <= radius ** 2:
+                                    # Make sure not to duplicate plants
+                                    if self not in field.plants[i][j]:
+                                        field.plants[i][j].append(self)
+            return soil_water
 
-        return soil_water
 
     ### Function to simulate the germination of a weed
     def weed_germination(self, timestring):
         timestring = str(timestring)
         date_obj = datetime.strptime(timestring, "%Y-%m-%d %H:%M:%S")
-        start_of_year = datetime(date_obj.year, 1, 1)
-        date = (date_obj - start_of_year).days + 1
-        for weed in weed_list:
-            if True:  # weed.plant.get('earliest_appearance') <= date <= weed.plant.get('latest_appearance'):
-                if random.randint(0, 50000) == 1:
-                    self.germination_date = date
+        date_str = timestring.split()[0]  # Extract date part from weather data
+        date = datetime.strptime(date_str, "%Y-%m-%d")
+        month_day = (date.month, date.day)
+        #reconert month_day into datetime object to compare with the start and end date               
+        month_day = datetime.strptime(str(month_day[0]) + "-" + str(month_day[1]), "%m-%d")
+        if random.randint(0, 50000) == 1:
+            for weed in weed_list:
+                if datetime.strptime(weed.plant['earliest_appearance'],"%m-%d") <=month_day <=  datetime.strptime(weed.plant['latest_appearance'],"%m-%d"):
+
+
                     # debug_print(f'{emptyplant} at x:{self.x_coordinate}, y:{self.y_coordinate}')
                     # Deleting the plant object
                     # debug_print(f'{plant} at x:{self.x_coordinate}, y:{self.y_coordinate}')
@@ -282,47 +293,189 @@ class Crop:
                         f"{weed.plant['name']} germinated at x:{self.x_coordinate}, y:{self.y_coordinate}"
                     )
         return self
+    def check_pests(self,weatherdata,field):
+        if len(self.pests) == 0:
+            
+            possible_pests = []
+
+            for pest in pest_list:
+                #convert daterange string into start and end date string: 15.04-15.05 -> 15.04 and 15.05, than convert into datetime object to compare with the weatherdata
+                start_date_str, end_date_str = pest["period"].split(":")
+                start_date = datetime.strptime(start_date_str, "%m-%d")
+                end_date = datetime.strptime(end_date_str, "%m-%d")
+                #calculate the temperature factor if between the min and max temperature factor =1, if below min temperature factor = 0, if above max
+                max_temperature = pest["max_temperature"]
+                min_temperature= pest["min_temperature"]
+                current_temperature = weatherdata[4]
+                # Calculate the difference (range) between max and min temperatures
+                temperature_range = max_temperature - min_temperature
+                if current_temperature < min_temperature:
+                    # Below min_temperature, calculate the factor linearly
+                    temperature_factor = max(0, 1 - (min_temperature - current_temperature) / temperature_range)
+                elif current_temperature > max_temperature:
+                    # Above max_temperature, calculate the factor linearly
+                    temperature_factor = max(0, 1 - (current_temperature - max_temperature) / temperature_range)
+                else:
+                    # Within the range
+                    temperature_factor = 1
+                # Extract month and day from weather data
+                date_str = weatherdata[0].split()[0]  # Extract date part from weather data
+                date = datetime.strptime(date_str, "%Y-%m-%d")
+                month_day = (date.month, date.day)
+                #reconert month_day into datetime object to compare with the start and end date
+                month_day = datetime.strptime(str(month_day[0]) + "-" + str(month_day[1]), "%m-%d")
+
+                if start_date <= month_day <= end_date:
+                    if pest["min_temperature"] <= weatherdata[4] <= pest["max_temperature"]:
+                        possible_pests.append(pest)
+            if len(possible_pests) == 0:
+                pass
+            else:
+                pest = random.choice(possible_pests)
+                if random.randint(0, 100000) < weatherdata[5]*temperature_factor:
+                    self.pest.append(pest["name"])
+                    debug_print(
+                        f"Illness {pest['name']} at x:{self.x_coordinate}, y:{self.y_coordinate}"
+                    )
+        else:
+            print(self.pests)
+            #check for all overlaping plants
+            radius = self.calculate_radius_from_bbch()
+            for i in range(self.x_coordinate - radius, self.x_coordinate + radius + 1):
+                for j in range(self.y_coordinate - radius, self.y_coordinate + radius + 1):
+                    if 0 <= i < len(field.plants) and 0 <= j < len(field.plants[0]):
+                        for plant in field.plants[i][j]:
+                            if plant!= self:
+                                if plant.plant["name"] != "Empty":
+                                    if random.randint(0, 1000) < weatherdata[5]:
+                                        field.plants[plant.x_coordinate][plant.y_coordinate][0].pests.append(self.pests)
+                                        input("T")
+                                        for pest in field.plants[plant.x_coordinate][plant.y_coordinate][0].pests:
+                                            debug_print(
+                                                f"Illness {pest} at x:{plant.x_coordinate}, y:{plant.y_coordinate}"
+                                            )
+
+        
+    def check_illnesses(self, weatherdata,field):
+        if len(self.illnesses) == 0:
+            
+            possible_illnesses = []
+
+            for illness in illness_list:
+                #convert daterange string into start and end date string: 15.04-15.05 -> 15.04 and 15.05, than convert into datetime object to compare with the weatherdata
+                start_date_str, end_date_str = illness["period"].split(":")
+                start_date = datetime.strptime(start_date_str, "%m-%d")
+                end_date = datetime.strptime(end_date_str, "%m-%d")
+                #calculate the temperature factor if between the min and max temperature factor =1, if below min temperature factor = 0, if above max
+                max_temperature = illness["max_temperature"]
+                min_temperature= illness["min_temperature"]
+                current_temperature = weatherdata[4]
+                # Calculate the difference (range) between max and min temperatures
+                temperature_range = max_temperature - min_temperature
+                if current_temperature < min_temperature:
+                    # Below min_temperature, calculate the factor linearly
+                    temperature_factor = max(0, 1 - (min_temperature - current_temperature) / temperature_range)
+                elif current_temperature > max_temperature:
+                    # Above max_temperature, calculate the factor linearly
+                    temperature_factor = max(0, 1 - (current_temperature - max_temperature) / temperature_range)
+                else:
+                    # Within the range
+                    temperature_factor = 1
+                # Extract month and day from weather data
+                date_str = weatherdata[0].split()[0]  # Extract date part from weather data
+                date = datetime.strptime(date_str, "%Y-%m-%d")
+                month_day = (date.month, date.day)
+                #reconert month_day into datetime object to compare with the start and end date
+                month_day = datetime.strptime(str(month_day[0]) + "-" + str(month_day[1]), "%m-%d")
+
+                if start_date <= month_day <= end_date:
+                    if illness["min_temperature"] <= weatherdata[4] <= illness["max_temperature"]:
+                        possible_illnesses.append(illness)
+            if len(possible_illnesses) == 0:
+                pass
+            else:
+                illness = random.choice(possible_illnesses)
+                if random.randint(0, 100000) < weatherdata[5]*temperature_factor:
+                    self.illnesses.append(illness["name"])
+                    debug_print(
+                        f"Illness {illness['name']} at x:{self.x_coordinate}, y:{self.y_coordinate}"
+                    )
+        else:
+            print(self.illnesses)
+            #check for all overlaping plants
+            radius = self.calculate_radius_from_bbch()
+            for i in range(self.x_coordinate - radius, self.x_coordinate + radius + 1):
+                for j in range(self.y_coordinate - radius, self.y_coordinate + radius + 1):
+                    if 0 <= i < len(field.plants) and 0 <= j < len(field.plants[0]):
+                        for plant in field.plants[i][j]:
+                            if plant!= self:
+                                if plant.plant["name"] != "Empty":
+                                    if random.randint(0, 1000) < weatherdata[5]:
+                                        field.plants[plant.x_coordinate][plant.y_coordinate][0].illnesses.append(self.illnesses)
+                                        input("T")
+                                        for ill in field.plants[plant.x_coordinate][plant.y_coordinate][0].illnesses:
+                                            debug_print(
+                                                f"Illness {ill} at x:{plant.x_coordinate}, y:{plant.y_coordinate}"
+                                            )
 
     ### Function to check if the plant is overgrown
     def check_overgrowth(self, field):
-        # Get index of current field
-        field_index = farm.fields.index(field)
         radius = self.calculate_radius_from_bbch()
-        # Check all plants in the radius if they are overgrown in a circle around the plant
-        for i in range(self.x_coordinate - radius, self.x_coordinate + radius):
-            for j in range(self.y_coordinate - radius, self.y_coordinate + radius):
-                if 0 <= i < len(farm.fields[field_index].plants) and 0 <= j < len(
-                    farm.fields[field_index].plants[0]
-                ):
-                    if (
-                        farm.fields[field_index].plants[i][j].plant["name"] != "Empty"
-                        and (i - self.x_coordinate) ** 2 + (j - self.y_coordinate) ** 2
-                        <= radius**2
-                    ):
-                        # Check if the crop is fully under the plant
-                        if (
-                            radius
-                            < Crop.calculate_radius_from_bbch(
-                                farm.fields[field_index].plants[i][j]
-                            )
-                            and random.randint(0, 100) < 50
-                        ):
-                            old_plant = self.plant["name"]
-                            self.plant = {"name": "Empty"}
-                            self.bbch = 0
-                            debug_print(
-                                f"{old_plant}, overgrown at x:{self.x_coordinate}, y:{self.y_coordinate}, by {farm.fields[field_index].plants[i][j].plant['name']} at x:{i}, y:{j}"
-                            )
-
-    def check_harvest(self, harvested_plants=[]):
+        not_overgrown_spots = 0
+        for i in range(self.x_coordinate - radius, self.x_coordinate + radius + 1):
+            for j in range(self.y_coordinate - radius, self.y_coordinate + radius + 1):
+                if 0 <= i < len(field.plants) and 0 <= j < len(field.plants[0]):
+                    if len(field.plants[i][j]) <2 :
+                        not_overgrown_spots =+1
+        if not_overgrown_spots == 0:
+            debug_print(f"Plant{self.plant["name"]} at x:{self.x_coordinate}, y:{self.y_coordinate} is overgrown. Press Enter to continue.") 
+            for i in range(self.x_coordinate - radius, self.x_coordinate + radius + 1):
+                for j in range(self.y_coordinate - radius, self.y_coordinate + radius + 1):
+                    if 0 <= i < len(field.plants) and 0 <= j < len(field.plants[0]):
+                        for plant in field.plants[i][j]:
+                            if plant.x_coordinate == self.x_coordinate and plant.y_coordinate == self.y_coordinate:
+                                plant.plant = {"name": "Empty"}
+                                plant.bbch = 0
+                                plant.harvested_yields = 0
+                                plant.illnesses = []
+                                plant.pests = {}
+                                plant.sowing_date = -1
+    def check_harvest(self, current_date, field):
         if not self.plant["is_weed"]:
             if self.bbch >= self.plant["harvest_at"]:
+                optimal_growing_time = self.plant["growth_speed"] * self.plant["harvest_at"]
+                # Calculate the actual growing time
+                growing_time = (datetime.strptime(current_date, "%Y-%m-%d %H:%M:%S") - self.sowing_date).days
+                yield_loss_factor = ((growing_time * 24) / optimal_growing_time) / 10
+                harvest_yield = self.plant["harvest_yield"] * yield_loss_factor
+                self.harvested_yields = harvest_yield
+                debug_print(f"Harvested at x:{self.x_coordinate}, y:{self.y_coordinate}")
+                field.harvested_plants.append(self)
+                sum_yield = 0
+                for plants in field.harvested_plants:
+                    print(plants.harvested_yields)
+                    sum_yield += plants.harvested_yields
+                radius = self.calculate_radius_from_bbch()
+                for i in range(self.x_coordinate - radius, self.x_coordinate + radius + 1):
+                    for j in range(self.y_coordinate - radius, self.y_coordinate + radius + 1):
+                        if 0 <= i < len(field.plants) and 0 <= j < len(field.plants[0]):
+                            cell = field.plants[i][j]
+                            for crop in cell:
+                                if crop.x_coordinate == self.x_coordinate and crop.y_coordinate == self.y_coordinate:
+                                    crop.plant = {"name": "Empty"}
+                                    crop.bbch = 0
+                                    crop.harvested_yields = 0
+                                    crop.illnesses = []
+                                    crop.pests = {}
+                                    crop.sowing_date = -1
                 self.plant = {"name": "Empty"}
                 self.bbch = 0
-                debug_print(
-                    f"Harvested at x:{self.x_coordinate}, y:{self.y_coordinate}"
-                )
-                harvested_plants.append(self)
+                self.illnesses = []
+                self.pests = {}
+                self.sowing_date = -1
+                self.harvested_yields = 0
+        return field.harvested_plants
+
 
     def calculate_radius_from_bbch(self):
         bbch = self.bbch
@@ -364,32 +517,31 @@ class Crop:
         for i in range(xcoord - radius * 2, xcoord + radius * 2):
             for j in range(ycoord - radius * 2, ycoord + radius * 2):
                 if 0 <= i < length and 0 <= j < width:
-                    # Check if the found plant overlaps with the current plant
-                    if (
-                        farm.fields[field_index].plants[i][j].plant["name"] != "Empty"
-                        and (i - xcoord) ** 2 + (j - ycoord) ** 2 <= radius**2
-                    ):
-                        if not (i == xcoord and j == ycoord):
-                            # Calculate the overlapping area
-                            plant_radius = (
-                                farm.fields[field_index]
-                                .plants[i][j]
-                                .calculate_radius_from_bbch()
-                            )
-                            overlap_radius = (
-                                radius
-                                + plant_radius
-                                - ((i - xcoord) ** 2 + (j - ycoord) ** 2) ** 0.5
-                            )
-                            if overlap_radius > 0:
-                                # Increment the total overlap
-                                total_overlap += overlap_radius
+                    # Iterate over each Crop instance in the cell
+                    #print(f"i: {i}, j: {j}{field.plants}")
+                    for crop_instance in farm.fields[field_index].plants[i][j]:
+                        # Check if the found plant is not empty
+                        if crop_instance.plant["name"] != "Empty":
+                            # Check if the found plant overlaps with the current plant
+                            if (i - xcoord) ** 2 + (j - ycoord) ** 2 <= radius ** 2:
+                                if not (i == xcoord and j == ycoord):
+                                    # Calculate the overlapping area
+                                    plant_radius = crop_instance.calculate_radius_from_bbch()
+                                    overlap_radius = (
+                                        radius
+                                        + plant_radius
+                                        - ((i - xcoord) ** 2 + (j - ycoord) ** 2) ** 0.5
+                                    )
+                                    if overlap_radius > 0:
+                                        # Increment the total overlap
+                                        total_overlap += overlap_radius
         # Calculate the weed factor
         weed_fct = 1 - (total_overlap / radius)
-        if weed_fct < 0:
-            weed_fct = 0
+        if weed_fct <= 0:
+            weed_fct = 0.1
         debug_print(f"weed_fct: {weed_fct}")
         return weed_fct
+
 
     ### Function to check if the has the required temperature
     def check_temperature(self, temp):  # is the temperature in the optimal range
@@ -524,7 +676,7 @@ carrotCharakteristics = {
     "is_weed": False,
     "needs_irrigation": True,
     "optimal_soil": "Sand",
-    "growth_speed": 1,  ##0.0291666, #bbch per hour
+    "growth_speed": 10,  ##0.0291666, #bbch per hour
     "harvest_at": 49,  # BBCH to harvest
     "max_temperature": 25,
     "min_temperature": -15,
@@ -537,6 +689,7 @@ carrotCharakteristics = {
     "row_distance": 10,
     "plant_distance": 10,
     "optimal_ph": 6,
+    "harvest_yield" : 0.1, #Kg/plant
 }
 cut_lettuceCharakteristics = {
     "name": "Cut Lettuce",
@@ -573,8 +726,8 @@ FrenchherbCharacteristics  = { ##Franzosenkraut
     "max_high": 80,  # cm
     "max_width": 15,  # Radius des Beschatteten Bereichs
     "waterusage": 0.125,  # mm/Stunde
-    "earliest_appearance": 120,
-    "latest_appearance": 240,
+    "earliest_appearance": "03-01",
+    "latest_appearance": "11-30",
     "growth_period": 75,  # days
     "optimal_growth_temperature": 20,
     "min_growth_temperature": 5,
@@ -595,8 +748,8 @@ JacobsragwortCharacteristics = {##Jakobs-Greiskraut
     "max_high": 80,  # cm
     "max_width": 15,  # Radius des Beschatteten Bereichs
     "waterusage": 0.125,  # mm/Stunde
-    "earliest_appearance": 120,
-    "latest_appearance": 240,
+    "earliest_appearance": "03-01",
+    "latest_appearance": "11-30",
     "growth_period": 75,  # days
     "optimal_growth_temperature": 20,
     "min_growth_temperature": 5,
@@ -617,8 +770,8 @@ thistleCharacteristics  = {##Distel
     "max_high": 80,  # cm
     "max_width": 15,  # Radius des Beschatteten Bereichs
     "waterusage": 0.125,  # mm/Stunde
-    "earliest_appearance": 120,
-    "latest_appearance": 240,
+    "earliest_appearance": "03-01",
+    "latest_appearance": "11-30",
     "growth_period": 75,  # days
     "optimal_growth_temperature": 20,
     "min_growth_temperature": 5,
@@ -640,8 +793,8 @@ CouchGrassCharacteristics  = {##Quecke
     "max_high": 80,  # cm
     "max_width": 15,  # Radius des Beschatteten Bereichs
     "waterusage": 0.125,  # mm/Stunde
-    "earliest_appearance": 120,
-    "latest_appearance": 240,
+    "earliest_appearance": "03-01",
+    "latest_appearance": "11-30",
     "growth_period": 75,  # days
     "optimal_growth_temperature": 20,
     "min_growth_temperature": 5,
@@ -663,8 +816,8 @@ ChickweedCharacteristics  = {##Voegelmiere
     "max_high": 80,  # cm
     "max_width": 15,  # Radius des Beschatteten Bereichs
     "waterusage": 0.125,  # mm/Stunde
-    "earliest_appearance": 120,
-    "latest_appearance": 240,
+    "earliest_appearance": "03-01",
+    "latest_appearance": "11-30",
     "growth_period": 75,  # days
     "optimal_growth_temperature": 20,
     "min_growth_temperature": 5,
@@ -686,8 +839,8 @@ ReportCharacteristics = {  ##Melde
     "max_high": 80,  # cm
     "max_width": 15,  # Radius des Beschatteten Bereichs
     "waterusage": 0.125,  # mm/Stunde
-    "earliest_appearance": 120,
-    "latest_appearance": 240,
+    "earliest_appearance": "03-01",
+    "latest_appearance": "11-30",
     "growth_period": 75,  # days
     "optimal_growth_temperature": 20,
     "min_growth_temperature": 5,
@@ -744,44 +897,55 @@ CabbageWhiteButterfly = {
 }
 Cabbagefly = {
     "name":"Cabbagefly",
-    "period":"15.04-15.05",
-    "period":"15.06-15.10",
-    "majorperiod":"15.04-15.05",
+    "period":"15-04,15-05",
+    "period":"15-06,15-10",
+    "majorperiod":"15-04,15-05",
     "impact":3,
 
 }
 #Illnesses
 Bacterialsoftrot = {
     "name":"Bacterial soft rot",
-    "period":"",
+    "period":"05-01:10-01",
     "impact":2,
+    "min_temperature": 20,
+    "max_temperature": 30,
 }
 Leafspot = {
     "name":"Leaf spot",
-    "period":"",
+    "period":"05-01:10-01",
     "impact":1,
+    "min_temperature": 20,
+    "max_temperature": 30,
 }
 #Falscher Mehltau
 Mildew = {
     "name":" Mildew",
-    "period":"01.05-01.10",
-    "majorperiod":"01.05-01.08",
+    "period":"05-01:10-01",
+    "majorperiod":"01-05:01-08",
     "impact":2,
+    "min_temperature": 15,
+    "max_temperature": 25,
 }
 #Kohlhernie
 Clubroot = {
     "name":"Clubroot",
-    "period":"01.05-01.10",
-    "majorperiod":"01.05-01.08",
+    "period":"05-01:10-01",
+    "majorperiod":"01-05:01-08",
     "impact":3,
+    "min_temperature": 18,
+    "max_temperature": 25,
 }
 #Ringfleckenkrankheit 
 RingSpotDisease = {
     "name":" Ring spot disease",
-    "period":"01.05-01.10",
-    "majorperiod":"01.05-01.08",
+    "period":"05-01:10-01",
+    "majorperiod":"01-05:01-08",
     "impact":3,
+    "min_temperature": 15,
+    "max_temperature": 25,
 }
+illness_list = [Bacterialsoftrot, Leafspot, Mildew, Clubroot, RingSpotDisease]
 ############################################################################################################
 # Input data
 ############################################################################################################
@@ -794,8 +958,8 @@ datainput = {
     "cropproportion": 1,
     "soiltype": silty_clay,
     "groundthickness": 30,
-    "startdate": "2022-09-30 00:00:00",
-    "enddate": "2022-10-30 05:00:00",
+    "startdate": "2023-05-30 00:00:00",
+    "enddate": "2023-10-30 00:00:00",
     "debugmode": False,
     "irrigation_ammount": 0.05,  # mm/irrigation
     "irrigation_frequency": 7,  # 1 times evry 7 hours
