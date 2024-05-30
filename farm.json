@@ -1,0 +1,1997 @@
+{
+    "name": "MyFarm",
+    "Fields": [
+        {
+            "name": "Field_001",
+            "length": 10,
+            "width": 10,
+            "crop": "Carrot",
+            "proportion": 1,
+            "waterlevel": 52.8257977801907,
+            "soiltype": "Silty Clay",
+            "plants": [
+                [
+                    [
+                        {
+                            "x": 0,
+                            "y": 0,
+                            "roots_x": 0,
+                            "roots_y": 0,
+                            "plant": {
+                                "name": "Carrot",
+                                "stage1": {
+                                    "Kc": 0.3,
+                                    "depth": 30,
+                                    "BBCH": 9,
+                                    "radius": 0.5
+                                },
+                                "stage2": {
+                                    "Kc": 0.6,
+                                    "depth": 30,
+                                    "BBCH": 15,
+                                    "radius": 4
+                                },
+                                "stage3": {
+                                    "Kc": 0.8,
+                                    "depth": 60,
+                                    "BBCH": 43,
+                                    "radius": 10
+                                },
+                                "stage4": {
+                                    "Kc": 1.0,
+                                    "depth": 60,
+                                    "BBCH": 65,
+                                    "radius": 15
+                                },
+                                "is_weed": false,
+                                "needs_irrigation": true,
+                                "optimal_soil": "Sand",
+                                "growth_speed": 10,
+                                "harvest_at": 49,
+                                "max_temperature": 25,
+                                "min_temperature": -15,
+                                "earliest_sowing_time": 30,
+                                "latest_sowing_time": 100,
+                                "min_growth_temperature": 4,
+                                "max_growth_temperature": 30,
+                                "optimal_growth_temperature": 20,
+                                "optimal_water": 40,
+                                "row_distance": 5,
+                                "plant_distance": 5,
+                                "optimal_ph": 6,
+                                "harvest_yield": 0.1
+                            },
+                            "bbch": 7.606382189052477,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": "2023-05-30",
+                            "harvested_yield": 0,
+                            "plant_type": "Plant"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 0,
+                            "y": 1,
+                            "roots_x": 0,
+                            "roots_y": 1,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 0,
+                            "y": 2,
+                            "roots_x": 0,
+                            "roots_y": 2,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 0,
+                            "y": 3,
+                            "roots_x": 0,
+                            "roots_y": 3,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 0,
+                            "y": 4,
+                            "roots_x": 0,
+                            "roots_y": 4,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 0,
+                            "y": 5,
+                            "roots_x": 0,
+                            "roots_y": 5,
+                            "plant": {
+                                "name": "Carrot",
+                                "stage1": {
+                                    "Kc": 0.3,
+                                    "depth": 30,
+                                    "BBCH": 9,
+                                    "radius": 0.5
+                                },
+                                "stage2": {
+                                    "Kc": 0.6,
+                                    "depth": 30,
+                                    "BBCH": 15,
+                                    "radius": 4
+                                },
+                                "stage3": {
+                                    "Kc": 0.8,
+                                    "depth": 60,
+                                    "BBCH": 43,
+                                    "radius": 10
+                                },
+                                "stage4": {
+                                    "Kc": 1.0,
+                                    "depth": 60,
+                                    "BBCH": 65,
+                                    "radius": 15
+                                },
+                                "is_weed": false,
+                                "needs_irrigation": true,
+                                "optimal_soil": "Sand",
+                                "growth_speed": 10,
+                                "harvest_at": 49,
+                                "max_temperature": 25,
+                                "min_temperature": -15,
+                                "earliest_sowing_time": 30,
+                                "latest_sowing_time": 100,
+                                "min_growth_temperature": 4,
+                                "max_growth_temperature": 30,
+                                "optimal_growth_temperature": 20,
+                                "optimal_water": 40,
+                                "row_distance": 5,
+                                "plant_distance": 5,
+                                "optimal_ph": 6,
+                                "harvest_yield": 0.1
+                            },
+                            "bbch": 7.009838960047195,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": "2023-05-30",
+                            "harvested_yield": 0,
+                            "plant_type": "Plant"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 0,
+                            "y": 6,
+                            "roots_x": 0,
+                            "roots_y": 6,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 0,
+                            "y": 7,
+                            "roots_x": 0,
+                            "roots_y": 7,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 0,
+                            "y": 8,
+                            "roots_x": 0,
+                            "roots_y": 8,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 0,
+                            "y": 9,
+                            "roots_x": 0,
+                            "roots_y": 9,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ]
+                ],
+                [
+                    [
+                        {
+                            "x": 1,
+                            "y": 0,
+                            "roots_x": 1,
+                            "roots_y": 0,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 1,
+                            "y": 1,
+                            "roots_x": 1,
+                            "roots_y": 1,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 1,
+                            "y": 2,
+                            "roots_x": 1,
+                            "roots_y": 2,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 1,
+                            "y": 3,
+                            "roots_x": 1,
+                            "roots_y": 3,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 1,
+                            "y": 4,
+                            "roots_x": 1,
+                            "roots_y": 4,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 1,
+                            "y": 5,
+                            "roots_x": 1,
+                            "roots_y": 5,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 1,
+                            "y": 6,
+                            "roots_x": 1,
+                            "roots_y": 6,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 1,
+                            "y": 7,
+                            "roots_x": 1,
+                            "roots_y": 7,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 1,
+                            "y": 8,
+                            "roots_x": 1,
+                            "roots_y": 8,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 1,
+                            "y": 9,
+                            "roots_x": 1,
+                            "roots_y": 9,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ]
+                ],
+                [
+                    [
+                        {
+                            "x": 2,
+                            "y": 0,
+                            "roots_x": 2,
+                            "roots_y": 0,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 2,
+                            "y": 1,
+                            "roots_x": 2,
+                            "roots_y": 1,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 2,
+                            "y": 2,
+                            "roots_x": 2,
+                            "roots_y": 2,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 2,
+                            "y": 3,
+                            "roots_x": 2,
+                            "roots_y": 3,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 2,
+                            "y": 4,
+                            "roots_x": 2,
+                            "roots_y": 4,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 2,
+                            "y": 5,
+                            "roots_x": 2,
+                            "roots_y": 5,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 2,
+                            "y": 6,
+                            "roots_x": 2,
+                            "roots_y": 6,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 2,
+                            "y": 7,
+                            "roots_x": 2,
+                            "roots_y": 7,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 2,
+                            "y": 8,
+                            "roots_x": 2,
+                            "roots_y": 8,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 2,
+                            "y": 9,
+                            "roots_x": 2,
+                            "roots_y": 9,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ]
+                ],
+                [
+                    [
+                        {
+                            "x": 3,
+                            "y": 0,
+                            "roots_x": 3,
+                            "roots_y": 0,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 3,
+                            "y": 1,
+                            "roots_x": 3,
+                            "roots_y": 1,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 3,
+                            "y": 2,
+                            "roots_x": 3,
+                            "roots_y": 2,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 3,
+                            "y": 3,
+                            "roots_x": 3,
+                            "roots_y": 3,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 3,
+                            "y": 4,
+                            "roots_x": 3,
+                            "roots_y": 4,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 3,
+                            "y": 5,
+                            "roots_x": 3,
+                            "roots_y": 5,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 3,
+                            "y": 6,
+                            "roots_x": 3,
+                            "roots_y": 6,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 3,
+                            "y": 7,
+                            "roots_x": 3,
+                            "roots_y": 7,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 3,
+                            "y": 8,
+                            "roots_x": 3,
+                            "roots_y": 8,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 3,
+                            "y": 9,
+                            "roots_x": 3,
+                            "roots_y": 9,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ]
+                ],
+                [
+                    [
+                        {
+                            "x": 4,
+                            "y": 0,
+                            "roots_x": 4,
+                            "roots_y": 0,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 4,
+                            "y": 1,
+                            "roots_x": 4,
+                            "roots_y": 1,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 4,
+                            "y": 2,
+                            "roots_x": 4,
+                            "roots_y": 2,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 4,
+                            "y": 3,
+                            "roots_x": 4,
+                            "roots_y": 3,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 4,
+                            "y": 4,
+                            "roots_x": 4,
+                            "roots_y": 4,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 4,
+                            "y": 5,
+                            "roots_x": 4,
+                            "roots_y": 5,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 4,
+                            "y": 6,
+                            "roots_x": 4,
+                            "roots_y": 6,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 4,
+                            "y": 7,
+                            "roots_x": 4,
+                            "roots_y": 7,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 4,
+                            "y": 8,
+                            "roots_x": 4,
+                            "roots_y": 8,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 4,
+                            "y": 9,
+                            "roots_x": 4,
+                            "roots_y": 9,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ]
+                ],
+                [
+                    [
+                        {
+                            "x": 5,
+                            "y": 0,
+                            "roots_x": 5,
+                            "roots_y": 0,
+                            "plant": {
+                                "name": "Carrot",
+                                "stage1": {
+                                    "Kc": 0.3,
+                                    "depth": 30,
+                                    "BBCH": 9,
+                                    "radius": 0.5
+                                },
+                                "stage2": {
+                                    "Kc": 0.6,
+                                    "depth": 30,
+                                    "BBCH": 15,
+                                    "radius": 4
+                                },
+                                "stage3": {
+                                    "Kc": 0.8,
+                                    "depth": 60,
+                                    "BBCH": 43,
+                                    "radius": 10
+                                },
+                                "stage4": {
+                                    "Kc": 1.0,
+                                    "depth": 60,
+                                    "BBCH": 65,
+                                    "radius": 15
+                                },
+                                "is_weed": false,
+                                "needs_irrigation": true,
+                                "optimal_soil": "Sand",
+                                "growth_speed": 10,
+                                "harvest_at": 49,
+                                "max_temperature": 25,
+                                "min_temperature": -15,
+                                "earliest_sowing_time": 30,
+                                "latest_sowing_time": 100,
+                                "min_growth_temperature": 4,
+                                "max_growth_temperature": 30,
+                                "optimal_growth_temperature": 20,
+                                "optimal_water": 40,
+                                "row_distance": 5,
+                                "plant_distance": 5,
+                                "optimal_ph": 6,
+                                "harvest_yield": 0.1
+                            },
+                            "bbch": 7.464637497858157,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": "2023-05-30",
+                            "harvested_yield": 0,
+                            "plant_type": "Plant"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 5,
+                            "y": 1,
+                            "roots_x": 5,
+                            "roots_y": 1,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 5,
+                            "y": 2,
+                            "roots_x": 5,
+                            "roots_y": 2,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 5,
+                            "y": 3,
+                            "roots_x": 5,
+                            "roots_y": 3,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 5,
+                            "y": 4,
+                            "roots_x": 5,
+                            "roots_y": 4,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 5,
+                            "y": 5,
+                            "roots_x": 5,
+                            "roots_y": 5,
+                            "plant": {
+                                "name": "Carrot",
+                                "stage1": {
+                                    "Kc": 0.3,
+                                    "depth": 30,
+                                    "BBCH": 9,
+                                    "radius": 0.5
+                                },
+                                "stage2": {
+                                    "Kc": 0.6,
+                                    "depth": 30,
+                                    "BBCH": 15,
+                                    "radius": 4
+                                },
+                                "stage3": {
+                                    "Kc": 0.8,
+                                    "depth": 60,
+                                    "BBCH": 43,
+                                    "radius": 10
+                                },
+                                "stage4": {
+                                    "Kc": 1.0,
+                                    "depth": 60,
+                                    "BBCH": 65,
+                                    "radius": 15
+                                },
+                                "is_weed": false,
+                                "needs_irrigation": true,
+                                "optimal_soil": "Sand",
+                                "growth_speed": 10,
+                                "harvest_at": 49,
+                                "max_temperature": 25,
+                                "min_temperature": -15,
+                                "earliest_sowing_time": 30,
+                                "latest_sowing_time": 100,
+                                "min_growth_temperature": 4,
+                                "max_growth_temperature": 30,
+                                "optimal_growth_temperature": 20,
+                                "optimal_water": 40,
+                                "row_distance": 5,
+                                "plant_distance": 5,
+                                "optimal_ph": 6,
+                                "harvest_yield": 0.1
+                            },
+                            "bbch": 6.310330745726882,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": "2023-05-30",
+                            "harvested_yield": 0,
+                            "plant_type": "Plant"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 5,
+                            "y": 6,
+                            "roots_x": 5,
+                            "roots_y": 6,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 5,
+                            "y": 7,
+                            "roots_x": 5,
+                            "roots_y": 7,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 5,
+                            "y": 8,
+                            "roots_x": 5,
+                            "roots_y": 8,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 5,
+                            "y": 9,
+                            "roots_x": 5,
+                            "roots_y": 9,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ]
+                ],
+                [
+                    [
+                        {
+                            "x": 6,
+                            "y": 0,
+                            "roots_x": 6,
+                            "roots_y": 0,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 6,
+                            "y": 1,
+                            "roots_x": 6,
+                            "roots_y": 1,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 6,
+                            "y": 2,
+                            "roots_x": 6,
+                            "roots_y": 2,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 6,
+                            "y": 3,
+                            "roots_x": 6,
+                            "roots_y": 3,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 6,
+                            "y": 4,
+                            "roots_x": 6,
+                            "roots_y": 4,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 6,
+                            "y": 5,
+                            "roots_x": 6,
+                            "roots_y": 5,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 6,
+                            "y": 6,
+                            "roots_x": 6,
+                            "roots_y": 6,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 6,
+                            "y": 7,
+                            "roots_x": 6,
+                            "roots_y": 7,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 6,
+                            "y": 8,
+                            "roots_x": 6,
+                            "roots_y": 8,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 6,
+                            "y": 9,
+                            "roots_x": 6,
+                            "roots_y": 9,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ]
+                ],
+                [
+                    [
+                        {
+                            "x": 7,
+                            "y": 0,
+                            "roots_x": 7,
+                            "roots_y": 0,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 7,
+                            "y": 1,
+                            "roots_x": 7,
+                            "roots_y": 1,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 7,
+                            "y": 2,
+                            "roots_x": 7,
+                            "roots_y": 2,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 7,
+                            "y": 3,
+                            "roots_x": 7,
+                            "roots_y": 3,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 7,
+                            "y": 4,
+                            "roots_x": 7,
+                            "roots_y": 4,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 7,
+                            "y": 5,
+                            "roots_x": 7,
+                            "roots_y": 5,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 7,
+                            "y": 6,
+                            "roots_x": 7,
+                            "roots_y": 6,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 7,
+                            "y": 7,
+                            "roots_x": 7,
+                            "roots_y": 7,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 7,
+                            "y": 8,
+                            "roots_x": 7,
+                            "roots_y": 8,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 7,
+                            "y": 9,
+                            "roots_x": 7,
+                            "roots_y": 9,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ]
+                ],
+                [
+                    [
+                        {
+                            "x": 8,
+                            "y": 0,
+                            "roots_x": 8,
+                            "roots_y": 0,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 8,
+                            "y": 1,
+                            "roots_x": 8,
+                            "roots_y": 1,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 8,
+                            "y": 2,
+                            "roots_x": 8,
+                            "roots_y": 2,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 8,
+                            "y": 3,
+                            "roots_x": 8,
+                            "roots_y": 3,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 8,
+                            "y": 4,
+                            "roots_x": 8,
+                            "roots_y": 4,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 8,
+                            "y": 5,
+                            "roots_x": 8,
+                            "roots_y": 5,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 8,
+                            "y": 6,
+                            "roots_x": 8,
+                            "roots_y": 6,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 8,
+                            "y": 7,
+                            "roots_x": 8,
+                            "roots_y": 7,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 8,
+                            "y": 8,
+                            "roots_x": 8,
+                            "roots_y": 8,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 8,
+                            "y": 9,
+                            "roots_x": 8,
+                            "roots_y": 9,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ]
+                ],
+                [
+                    [
+                        {
+                            "x": 9,
+                            "y": 0,
+                            "roots_x": 9,
+                            "roots_y": 0,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 9,
+                            "y": 1,
+                            "roots_x": 9,
+                            "roots_y": 1,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 9,
+                            "y": 2,
+                            "roots_x": 9,
+                            "roots_y": 2,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 9,
+                            "y": 3,
+                            "roots_x": 9,
+                            "roots_y": 3,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 9,
+                            "y": 4,
+                            "roots_x": 9,
+                            "roots_y": 4,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 9,
+                            "y": 5,
+                            "roots_x": 9,
+                            "roots_y": 5,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 9,
+                            "y": 6,
+                            "roots_x": 9,
+                            "roots_y": 6,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 9,
+                            "y": 7,
+                            "roots_x": 9,
+                            "roots_y": 7,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 9,
+                            "y": 8,
+                            "roots_x": 9,
+                            "roots_y": 8,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ],
+                    [
+                        {
+                            "x": 9,
+                            "y": 9,
+                            "roots_x": 9,
+                            "roots_y": 9,
+                            "plant": {
+                                "name": "Empty",
+                                "added": "planting"
+                            },
+                            "bbch": 0,
+                            "illness": [],
+                            "pests": [],
+                            "sowingdate": -1,
+                            "harvested_yield": 0,
+                            "plant_type": "Empty"
+                        }
+                    ]
+                ]
+            ],
+            "harvested": []
+        }
+    ]
+}
