@@ -1,4 +1,4 @@
-Date,Windstärke in km/h,Lufttemperatur in °C,Rel. Feuchtigkeit in %,Globalstrahlung in J/m²,Dampfdruck in hPa,Feuchttemperatur in °C,Niederschlag in mm
+Date,Windstärke in km/h,Lufttemperatur in °C,Rel. Feuchtigkeit in %,Globalstrahlung in J/cm²,Dampfdruck in hPa,Feuchttemperatur in °C,Niederschlag in mm
 2022-09-30 00:00:00,0.8,4.8,97.0,0.0,10.5,7.7,0.0
 2022-09-30 01:00:00,0.6,4.5,98.0,0.0,10.0,7.0,0.0
 2022-09-30 02:00:00,0.6,4.1,96.0,0.0,9.8,6.7,0.0
