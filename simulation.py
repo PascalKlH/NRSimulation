@@ -12,7 +12,6 @@ import mplcursors
 # This file contains the classes and functions that are used to simulate the growth of plants in the field #
 ############################################################################################################
 
-
 class Farm:
     def __init__(self, name):
         self.name = name
@@ -63,14 +62,12 @@ class Farm:
                 datainput["soiltype"],
             )
             farm.fields.append(field)
-        
 
         for field in farm.fields:
             field.plant_plants(
                 datetime.strptime(datainput["startdate"], "%Y-%m-%d %H:%M:%S")
             )
             field.create_plot()
-            
 
         hour_step = timedelta(hours=1)
         current_date = datetime.strptime(datainput["startdate"], "%Y-%m-%d %H:%M:%S")
@@ -84,16 +81,17 @@ class Farm:
             weather_data = Farm.query_weather_data_by_date(
                 "transformed_weather_data.csv", date
             )
-            field.simulate(weather_data, field)
-            plants_data,pests,illnesses = field.update_plot(weather_data[0])
-            field.im_plants.set_data(plants_data)
-            #field.im.set_data(pests)
-            #field.im.set_data(illnesses)
+            for field in farm.fields:
+                field.simulate_async(weather_data, field)
+                plants_data, pests, illnesses = field.update_plot(weather_data[0])
+                field.im_plants.set_data(plants_data)
+                # field.im.set_data(pests)
+                # field.im.set_data(illnesses)
 
-            plt.pause(0.01)
+            plt.pause(0.001)
 
         input("Press Enter to close the simulation")
-
+   
     def farm_to_json_async(
         self,
     ):
@@ -118,7 +116,9 @@ class Field:
         self.harvested_plants = []  # list of harvested plants
         self.waterlevel = waterlevel  # waterlevel in the soil All one Field has one waterlevel which is the same for all plants
         self.soiltype = soiltype  # soiltype of the field
-
+    def simulate_async(self,wheatherdata,field):
+        thread = threading.Thread(target=self.simulate(wheatherdata,field))
+        thread.start()
     def to_dict(self):
         return {
             "name": self.name,
@@ -181,7 +181,7 @@ class Field:
         # Add legend for pests and illnesses
         self.ax.legend(['Pests', 'Illnesses'], loc='upper left')
 
-        self.ax.grid(True, which="major", color="black", linewidth=0.5)
+        #self.ax.grid(True, which="major", color="black", linewidth=0.5)
         self.ax.set_xticks(np.arange(0, self.width, 1), minor=False)
         self.ax.set_yticks(np.arange(0, self.length, 1), minor=False)
         self.ax.set_xticklabels(
@@ -198,16 +198,11 @@ class Field:
             i, j = int(sel.target[1]), int(sel.target[0])
             plants_at_location = self.plants[i][j]
             last_plant = plants_at_location[-1]  # Access the last element of the list
-            sel.annotation.set(text=f"PLANT: {last_plant.plant['name']}\nIllnesses: {', '.join(ill['name'] for ill in last_plant.illnesses)}\nPests: {', '.join(pest['name'] for pest in last_plant.pests)}\nBBCH: {last_plant.bbch}\nPlant Type: {last_plant.plant_type}")
+            sel.annotation.set(text=f"PLANT: {last_plant.plant['name']}\nIllnesses: {', '.join(ill['name'] for ill in last_plant.illnesses)}\nPests: {', '.join(pest['name'] for pest in last_plant.pests)}\nBBCH: {round(last_plant.bbch,2)}\nPlant Type: {last_plant.plant_type}")
 
 
         plt.ion()
         plt.show()
-
-
-
-
-
 
 
     def update_plot(self,date):
@@ -309,7 +304,7 @@ class Field:
                                     plant.delete_plant(self)
 
     def simulate(self, weatherdata, field):
-        field.weeding(weatherdata[0])
+        self.weeding(weatherdata[0])
         for row in self.plants:
             for cell in row:
                 for plant_in_cell in cell:
@@ -335,8 +330,8 @@ class Crop:
         roots_y=-1,
         sow_date=-1,
         plant_type=None,
-        pests=[],
-        illnesses=[],
+        pests=None,
+        illnesses=None,
         bbch=0,
         harvested_yield_factor=1,
     ):
@@ -345,9 +340,9 @@ class Crop:
         self.roots_x = roots_x
         self.roots_y = roots_y
         self.plant = plant
-        self.pests = pests
+        self.pests = pests if pests is not None else []
         self.bbch = bbch
-        self.illnesses = illnesses
+        self.illnesses = illnesses if illnesses is not None else []
         self.sow_date = sow_date
         self.harvested_yield_factor = harvested_yield_factor
         self.harvested_yield = 0
@@ -398,9 +393,7 @@ class Crop:
                                 j - self.y_coordinate
                             ) ** 2 <= radius**2:
                                 # Ensure the cell is not duplicated
-                                """
-                                    Die Pflanze soll nur hinzugefugt werden wenn sie an dieder stelle noch nicht exiasitiert
-                                    """
+
                                 new_plant = Crop(
                                     {
                                         "name":self.plant["name"],
@@ -412,6 +405,9 @@ class Crop:
                                     self.roots_y,
                                     self.sow_date,
                                     "leafs",
+                                    self.pests,
+                                    self.illnesses,
+                                    self.bbch,
                                 )
                                 for plant in field.plants[i][j]:
                                     if (
@@ -568,42 +564,25 @@ class Crop:
             possible_illnesses = []
 
             for illness in illness_list:
-                # Convert daterange string into start and end date string: 15.04-15.05 -> 15.04 and 15.05, then convert into datetime object to compare with the weatherdata
                 start_date_str, end_date_str = illness["period"].split(":")
                 start_date = datetime.strptime(start_date_str, "%m-%d")
                 end_date = datetime.strptime(end_date_str, "%m-%d")
 
-                # Calculate the temperature factor if between the min and max temperature factor = 1, if below min temperature factor = 0, if above max
                 max_temperature = illness["max_temperature"]
                 min_temperature = illness["min_temperature"]
                 current_temperature = weatherdata[4]
 
-                # Calculate the difference (range) between max and min temperatures
                 temperature_range = max_temperature - min_temperature
                 if current_temperature < min_temperature:
-                    # Below min_temperature, calculate the factor linearly
-                    temperature_factor = max(
-                        0,
-                        1 - (min_temperature - current_temperature) / temperature_range,
-                    )
+                    temperature_factor = max(0, 1 - (min_temperature - current_temperature) / temperature_range)
                 elif current_temperature > max_temperature:
-                    # Above max_temperature, calculate the factor linearly
-                    temperature_factor = max(
-                        0,
-                        1 - (current_temperature - max_temperature) / temperature_range,
-                    )
+                    temperature_factor = max(0, 1 - (current_temperature - max_temperature) / temperature_range)
                 else:
-                    # Within the range
                     temperature_factor = 1
 
-                # Extract month and day from weather data
-                date_str = weatherdata[0].split()[
-                    0
-                ]  # Extract date part from weather data
+                date_str = weatherdata[0].split()[0]
                 date = datetime.strptime(date_str, "%Y-%m-%d")
                 month_day = (date.month, date.day)
-
-                # Reconvert month_day into datetime object to compare with the start and end date
                 month_day = datetime.strptime(f"{month_day[0]}-{month_day[1]}", "%m-%d")
 
                 if start_date <= month_day <= end_date:
@@ -669,10 +648,11 @@ class Crop:
                     self.y_coordinate - radius, self.y_coordinate + radius + 1
                 ):
                     if 0 <= i < len(field.plants) and 0 <= j < len(field.plants[0]):
-                        if (i - self.x_coordinate) ** 2 + (
-                            j - self.y_coordinate
-                        ) ** 2 <= radius**2:
-                            plants_in_radius.extend(field.plants[i][j])
+                        if (i - self.x_coordinate) ** 2 + (j - self.y_coordinate) ** 2 <= radius**2:
+                            for plant in field.plants[i][j]:
+                                if plant.roots_x == self.roots_x and plant.roots_y == self.roots_y:
+                                    if plant.plant_type != "Empty":
+                                        plants_in_radius.extend(field.plants[i][j])
             return plants_in_radius
         else:
             return [self]
@@ -859,8 +839,8 @@ carrotCharakteristics = {
     "max_growth_temperature": 30,
     "optimal_growth_temperature": 20,
     "optimal_water": 40,
-    "row_distance": 10,
-    "plant_distance": 10,
+    "row_distance": 5,
+    "plant_distance": 5,
     "optimal_ph": 6,
     "harvest_yield": 0.1,  # Kg/plant
 }
