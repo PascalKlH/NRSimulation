@@ -86,9 +86,9 @@ class Farm:
             )
             field.simulate(weather_data, field)
             plants_data,pests,illnesses = field.update_plot(weather_data[0])
-            field.im.set_data(plants_data)
-            field.im.set_data(pests)
-            field.im.set_data(illnesses)
+            field.im_plants.set_data(plants_data)
+            #field.im.set_data(pests)
+            #field.im.set_data(illnesses)
 
             plt.pause(0.01)
 
@@ -154,21 +154,7 @@ class Field:
         # Create separate arrays for each category
         plants_data, pests_data, illnesses_data = self.update_plot("")
 
-        # Plot plants
-        self.im_plants = self.ax.imshow(
-            pests_data,  # Plant data
-            cmap=cmap_pests,
-            interpolation="nearest",
-            vmin=0,
-            vmax=4,  # Adjust according to the number of categories
-        )
-        self.im_plants = self.ax.imshow(
-            illnesses_data,  # Plant data
-            cmap=cmap_illnesses,
-            interpolation="nearest",
-            vmin=0,
-            vmax=5,  # Adjust according to the number of categories
-        )
+
         self.im_plants = self.ax.imshow(
             plants_data,  # Plant data
             cmap=cmap_plants,
@@ -177,15 +163,6 @@ class Field:
             vmax=8,  # Adjust according to the number of categories
         )
 
-        # Plot contours for pests
-        self.ax.contour(
-            pests_data, levels=[1, 2, 3, 4], colors='black', linewidths=1, alpha=0.5
-        )
-
-        # Plot contours for illnesses
-        self.ax.contour(
-            illnesses_data, levels=[1, 2, 3, 4, 5], colors='red', linewidths=1, alpha=0.5
-        )
 
         # Define tick labels for the color bar
         tick_labels = [
@@ -219,8 +196,10 @@ class Field:
         @cursor.connect("add")
         def on_add(sel):
             i, j = int(sel.target[1]), int(sel.target[0])
-            plant = plants_data[i][j]
-            sel.annotation.set(text=f"Type: {plant.plant_type}\nSize: {plant.size}\nDisease: {plant.disease}\nPests: {plant.pests}")
+            plants_at_location = self.plants[i][j]
+            last_plant = plants_at_location[-1]  # Access the last element of the list
+            sel.annotation.set(text=f"PLANT: {last_plant.plant['name']}\nIllnesses: {', '.join(ill['name'] for ill in last_plant.illnesses)}\nPests: {', '.join(pest['name'] for pest in last_plant.pests)}\nBBCH: {last_plant.bbch}\nPlant Type: {last_plant.plant_type}")
+
 
         plt.ion()
         plt.show()
