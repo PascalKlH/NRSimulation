@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import ListedColormap
 import mplcursors
+import Plants
 
 ############################################################################################################
 # This file contains the classes and functions that are used to simulate the growth of plants in the field #
@@ -49,30 +50,30 @@ class Farm:
         return weather_data
 
     def start_simulation():
-        farm = Farm(datainput["Farmname"])
+        farm = Farm(PARAMETERS["Farmname"])
 
-        for i in range(datainput["number_of_fields"]):
+        for i in range(PARAMETERS["number_of_fields"]):
             field = Field(
-                datainput["Fieldname"],
-                datainput["length"],
-                datainput["width"],
-                datainput["crop"],
-                datainput["cropproportion"],
-                datainput["beginning_waterlevel"],
-                datainput["soiltype"],
+                PARAMETERS["Fieldname"],
+                PARAMETERS["length"],
+                PARAMETERS["width"],
+                PARAMETERS["crop"],
+                PARAMETERS["cropproportion"],
+                PARAMETERS["beginning_waterlevel"],
+                PARAMETERS["soiltype"],
             )
             farm.fields.append(field)
 
         for field in farm.fields:
             field.plant_plants(
-                datetime.strptime(datainput["startdate"], "%Y-%m-%d %H:%M:%S")
+                datetime.strptime(PARAMETERS["startdate"], "%Y-%m-%d %H:%M:%S")
             )
             field.create_plot()
 
         hour_step = timedelta(hours=1)
-        current_date = datetime.strptime(datainput["startdate"], "%Y-%m-%d %H:%M:%S")
+        current_date = datetime.strptime(PARAMETERS["startdate"], "%Y-%m-%d %H:%M:%S")
         while current_date <= datetime.strptime(
-            datainput["enddate"], "%Y-%m-%d %H:%M:%S"
+            PARAMETERS["enddate"], "%Y-%m-%d %H:%M:%S"
         ):
             #if current_date.hour == 0:
                 #farm.farm_to_json_async()
@@ -136,7 +137,7 @@ class Field:
         }
     def create_plot(self):
         self.fig, self.ax = plt.subplots()  # Create the plot
-        self.ax.set_title(f"Field {self.name}, date: {datainput['startdate']}")
+        self.ax.set_title(f"Field {self.name}, date: {PARAMETERS['startdate']}")
 
         # Define color map for different categories
         cmap_plants = ListedColormap([
@@ -198,7 +199,7 @@ class Field:
             i, j = int(sel.target[1]), int(sel.target[0])
             plants_at_location = self.plants[i][j]
             last_plant = plants_at_location[-1]  # Access the last element of the list
-            sel.annotation.set(text=f"PLANT: {last_plant.plant['name']}\nIllnesses: {', '.join(ill['name'] for ill in last_plant.illnesses)}\nPests: {', '.join(pest['name'] for pest in last_plant.pests)}\nBBCH: {round(last_plant.bbch,2)}\nPlant Type: {last_plant.plant_type}")
+            sel.annotation.set(text=f"PLANT: {last_plant.plant['name']}\nIllnesses: {', '.join(ill['name'] for ill in last_plant.illnesses)}\nPests: {', '.join(pest['name'] for pest in last_plant.pests)}\nBBCH: {round(last_plant.bbch,2)}")
 
 
         plt.ion()
@@ -262,24 +263,30 @@ class Field:
             row = []
             for j in range(self.width):
                 cell = []
-                if (i % self.crop.plant["row_distance"] == 0 or i == 0) and (
-                    j % self.crop.plant["plant_distance"] == 0 or j == 0
-                ):
-                    if random.random() < self.proportion:
-                        plant = Crop(self.crop.plant, i, j, i, j, start_date, "Plant")
-                        cell.append(plant)
+                # Ensure we don't plant in the outermost rows and columns
+                if 0 < i < self.length - 1 and 0 < j < self.width - 1:
+                    if (i % self.crop["row_distance"] == 0) and (j % self.crop["plant_distance"] == 0):
+                        if random.random() < self.proportion:
+                            plant = Crop(self.crop, i, j, i, j, start_date, "Plant")
+                            cell.append(plant)
+                        else:
+                            plant = Crop(
+                                {"name": "Empty", "added": "planting"},
+                                i,
+                                j,
+                                i,
+                                j,
+                                -1,
+                                "Empty",
+                            )
+                            cell.append(plant)
                     else:
                         plant = Crop(
-                            {"name": "Empty", "added": "planting"},
-                            i,
-                            j,
-                            i,
-                            j,
-                            -1,
-                            "Empty",
+                            {"name": "Empty", "added": "planting"}, i, j, i, j, -1, "Empty"
                         )
                         cell.append(plant)
                 else:
+                    # Always add an empty plant in the outermost rows and columns
                     plant = Crop(
                         {"name": "Empty", "added": "planting"}, i, j, i, j, -1, "Empty"
                     )
@@ -287,21 +294,23 @@ class Field:
                 row.append(cell)  # Append the cell to the row
             self.plants.append(row)  # Append the row to the field grid
 
+
     def weeding(self, date):
         date = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
-        intervall = 10
+        intervall = PARAMETERS["weeding_interval"]
         if date.day % intervall == 0:
             if date.hour == 0:
                 for row in self.plants:
                     for cell in row:
                         for plant in cell:
-                            if any(
-                                plant.plant["name"] == weed.plant["name"]
-                                for weed in weed_list
-                            ):
-                                if random.randint(0, 100) < 10 * plant.bbch:
-                                    # Weeding logic
-                                    plant.delete_plant(self)
+                            if plant.plant_type == "Plant":
+                                if any(
+                                    plant.plant["name"] == weed.plant["name"]
+                                    for weed in WEEDLIST
+                                ):
+                                    if random.randint(0, 100) < 10 * plant.bbch:
+                                        # Weeding logic
+                                        plant.delete_plant(self)
 
     def simulate(self, weatherdata, field):
         self.weeding(weatherdata[0])
@@ -375,8 +384,8 @@ class Crop:
         tmp_factor = self.check_temperature(weatherdata[4])
         growth_factor =  wtr_factor* tmp_factor* wed_factor* pst_factor* ill_factor* random.random()
         self.bbch += (growth_factor * plant_factor)
-        self.harvested_yield_factor = (growth_factor+self.harvested_yield_factor)/2
-        self.check_harvest(field)
+
+        self.check_harvest(field,growth_factor)
         if self.plant_type == "Plant":
             self.check_overgrowth(field)
 
@@ -467,8 +476,8 @@ class Crop:
                 str(month_day[0]) + "-" + str(month_day[1]), "%m-%d"
             )
             possible_weeds = []
-            if random.randint(0, 50000) == 1:
-                for weed in weed_list:
+            if random.randint(0, 5000) == 1:
+                for weed in WEEDLIST:
                     if (
                         datetime.strptime(weed.plant["earliest_appearance"], "%m-%d")
                         <= month_day
@@ -490,7 +499,7 @@ class Crop:
         if len(self.pests) == 0:
             possible_pests = []
 
-            for pest in pest_list:
+            for pest in PESTLIST:
                 # convert daterange string into start and end date string: 15.04-15.05 -> 15.04 and 15.05, than convert into datetime object to compare with the weatherdata
                 start_date_str, end_date_str = pest["period"].split(":")
                 start_date = datetime.strptime(start_date_str, "%m-%d")
@@ -563,7 +572,7 @@ class Crop:
         if len(self.illnesses) == 0:
             possible_illnesses = []
 
-            for illness in illness_list:
+            for illness in ILNESSLIST:
                 start_date_str, end_date_str = illness["period"].split(":")
                 start_date = datetime.strptime(start_date_str, "%m-%d")
                 end_date = datetime.strptime(end_date_str, "%m-%d")
@@ -632,9 +641,9 @@ class Crop:
             if has_other_plants:
                 self.delete_plant(field)
 
-    def check_harvest(self, field):
+    def check_harvest(self, field, growth_factor):
         if not self.plant["is_weed"]:
-            if self.bbch >= self.plant["harvest_at"]:
+            if self.bbch >= self.plant["latest_harvest"]:
                 self.harvested_yield = self.harvested_yield_factor*self.plant["harvest_yield"]
                 field.harvested_plants.append(self)
                 self.delete_plant(field)
@@ -711,9 +720,9 @@ class Crop:
         date_obj = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
 
         # Determine irrigation amount based on the current hour and irrigation frequency
-        if date_obj.hour % datainput["irrigation_frequency"] == 0:
+        if date_obj.hour % PARAMETERS["irrigation_frequency"] == 0:
             irrigation = (
-                datainput["irrigation_amount"] * datainput["irrigation_duration"]
+                PARAMETERS["irrigation_amount"] * PARAMETERS["irrigation_duration"]
             )
         else:
             irrigation = 0
@@ -757,17 +766,17 @@ class Crop:
 
         # Calculate the factor based on optimal water level
         optimal_water = self.plant["optimal_water"]
-        FK = field.soiltype.FK / 10 * soil_thickness
-        PWP = field.soiltype.PWP / 10 * soil_thickness
+        fk = field.soiltype.FK / 10 * soil_thickness
+        pwp = field.soiltype.PWP / 10 * soil_thickness
 
         if waterlevel == optimal_water:
             factor = 1
-        elif waterlevel >= FK:
+        elif waterlevel >= fk:
             factor = 0
-        elif waterlevel <= PWP:
+        elif waterlevel <= pwp:
             factor = 0
         else:
-            factor = (waterlevel - PWP) / (FK - PWP)
+            factor = (waterlevel - pwp) / (fk - pwp)
 
         # Update field water level
         field.waterlevel = waterlevel
@@ -816,300 +825,24 @@ def query_specific_value_by_date(csv_file, query_date, column_name):
     except IndexError:
         return None
 
+WEEDLIST = [Crop(Plants.FRENCHHERB), Crop(Plants.THISTLE), Crop(Plants.COUCHGRASS), Crop(Plants.CHICKWEED), Crop(Plants.REPORT),Crop(Plants.JACOBSRAGWORT)]
+CROPLIST = ["Carrot", "cut_lettuce"]
 
-############################################################################################################
-# Chracteristics of the plants and the soil
-############################################################################################################
-carrotCharakteristics = {
-    "name": "Carrot",
-    "stage1": {"Kc": 0.3, "depth": 30, "BBCH": 9, "radius": 0.5},
-    "stage2": {"Kc": 0.6, "depth": 30, "BBCH": 15, "radius": 4},
-    "stage3": {"Kc": 0.8, "depth": 60, "BBCH": 43, "radius": 10},
-    "stage4": {"Kc": 1.0, "depth": 60, "BBCH": 65, "radius": 15},
-    "is_weed": False,
-    "needs_irrigation": True,
-    "optimal_soil": "Sand",
-    "growth_speed": 10,  ##0.0291666, #bbch per hour
-    "harvest_at": 49,  # BBCH to harvest
-    "max_temperature": 25,
-    "min_temperature": -15,
-    "earliest_sowing_time": 30,
-    "latest_sowing_time": 100,
-    "min_growth_temperature": 4,
-    "max_growth_temperature": 30,
-    "optimal_growth_temperature": 20,
-    "optimal_water": 40,
-    "row_distance": 5,
-    "plant_distance": 5,
-    "optimal_ph": 6,
-    "harvest_yield": 0.1,  # Kg/plant
-}
-cut_lettuceCharakteristics = {
-    "name": "Cut Lettuce",
-    "stage1": {"Kc": 0.3, "depth": 30, "BBCH": 9},
-    "stage2": {"Kc": 0.6, "depth": 30, "BBCH": 15},
-    "stage3": {"Kc": 0.8, "depth": 60, "BBCH": 43},
-    "stage4": {"Kc": 1.0, "depth": 60, "BBCH": 65},
-    "is_weed": False,
-    "needs_irrigation": True,
-    "optimal_soil": "Sand",
-    "max_temperature": 25,
-    "min_temperature": -15,
-    "earliest_sowing_time": 30,
-    "latest_sowing_time": 100,
-    "min_growth_temperature": 4,
-    "max_growth_temperature": 30,
-    "optimal_growth_temperature": 20,
-    "row_distance": 15,
-    "plant_distance": 3,
-    "optimal_ph": 6,
-}
-FrenchherbCharacteristics = {  ##Franzosenkraut
-    "name": "French Herb",
-    "stage1": {"Kc": 0.3, "depth": 30, "BBCH": 9, "radius": 0.5},
-    "stage2": {"Kc": 0.6, "depth": 30, "BBCH": 15, "radius": 4},
-    "stage3": {"Kc": 0.8, "depth": 60, "BBCH": 43, "radius": 10},
-    "stage4": {"Kc": 1.0, "depth": 60, "BBCH": 65, "radius": 15},
-    "is_weed": True,
-    "impact": "Bad",
-    "optimal_soil": "sand",
-    "growth_speed": 1.2,  # 0.0391666, #bbch per hour
-    "optimal_water": 45,
-    "optimal_ph": 6,
-    "max_high": 80,  # cm
-    "max_width": 15,  # Radius des Beschatteten Bereichs
-    "waterusage": 0.125,  # mm/Stunde
-    "earliest_appearance": "03-01",
-    "latest_appearance": "11-30",
-    "growth_period": 75,  # days
-    "optimal_growth_temperature": 20,
-    "min_growth_temperature": 5,
-    "max_growth_temperature": 30,
-}
-JacobsragwortCharacteristics = {  ##Jakobs-Greiskraut
-    "name": "Jacobsragwort",
-    "stage1": {"Kc": 0.3, "depth": 30, "BBCH": 9, "radius": 0.5},
-    "stage2": {"Kc": 0.6, "depth": 30, "BBCH": 15, "radius": 4},
-    "stage3": {"Kc": 0.8, "depth": 60, "BBCH": 43, "radius": 10},
-    "stage4": {"Kc": 1.0, "depth": 60, "BBCH": 65, "radius": 15},
-    "is_weed": True,
-    "impact": "Bad",
-    "optimal_water": 30,
-    "optimal_soil": "sand",
-    "growth_speed": 1.5,  # 0.021666, #bbch per hour
-    "optimal_ph": 6,
-    "max_high": 80,  # cm
-    "max_width": 15,  # Radius des Beschatteten Bereichs
-    "waterusage": 0.125,  # mm/Stunde
-    "earliest_appearance": "03-01",
-    "latest_appearance": "11-30",
-    "growth_period": 75,  # days
-    "optimal_growth_temperature": 20,
-    "min_growth_temperature": 5,
-    "max_growth_temperature": 30,
-}
-thistleCharacteristics = {  ##Distel
-    "name": "Thistle",
-    "stage1": {"Kc": 0.3, "depth": 30, "BBCH": 9, "radius": 0.5},
-    "stage2": {"Kc": 0.6, "depth": 30, "BBCH": 15, "radius": 4},
-    "stage3": {"Kc": 0.8, "depth": 60, "BBCH": 43, "radius": 10},
-    "stage4": {"Kc": 1.0, "depth": 60, "BBCH": 65, "radius": 15},
-    "is_weed": True,
-    "impact": "Bad",
-    "optimal_soil": "sand",
-    "growth_speed": 1.2,  # 0.0391666, #bbch per hour
-    "optimal_water": 45,
-    "optimal_ph": 6,
-    "max_high": 80,  # cm
-    "max_width": 15,  # Radius des Beschatteten Bereichs
-    "waterusage": 0.125,  # mm/Stunde
-    "earliest_appearance": "03-01",
-    "latest_appearance": "11-30",
-    "growth_period": 75,  # days
-    "optimal_growth_temperature": 20,
-    "min_growth_temperature": 5,
-    "max_growth_temperature": 30,
-}
-CouchGrassCharacteristics = {  ##Quecke
-    "name": "Couch Grass",
-    "stage1": {"Kc": 0.3, "depth": 30, "BBCH": 9, "radius": 0.5},
-    "stage2": {"Kc": 0.6, "depth": 30, "BBCH": 15, "radius": 4},
-    "stage3": {"Kc": 0.8, "depth": 60, "BBCH": 43, "radius": 10},
-    "stage4": {"Kc": 1.0, "depth": 60, "BBCH": 65, "radius": 15},
-    "is_weed": True,
-    "impact": "Bad",
-    "optimal_soil": "sand",
-    "growth_speed": 1.2,  # 0.0391666, #bbch per hour
-    "optimal_water": 45,
-    "optimal_ph": 6,
-    "max_high": 80,  # cm
-    "max_width": 15,  # Radius des Beschatteten Bereichs
-    "waterusage": 0.125,  # mm/Stunde
-    "earliest_appearance": "03-01",
-    "latest_appearance": "11-30",
-    "growth_period": 75,  # days
-    "optimal_growth_temperature": 20,
-    "min_growth_temperature": 5,
-    "max_growth_temperature": 30,
-}
-ChickweedCharacteristics = {  ##Voegelmiere
-    "name": "Chick weed",
-    "stage1": {"Kc": 0.3, "depth": 30, "BBCH": 9, "radius": 0.5},
-    "stage2": {"Kc": 0.6, "depth": 30, "BBCH": 15, "radius": 4},
-    "stage3": {"Kc": 0.8, "depth": 60, "BBCH": 43, "radius": 10},
-    "stage4": {"Kc": 1.0, "depth": 60, "BBCH": 65, "radius": 15},
-    "is_weed": True,
-    "impact": "Bad",
-    "optimal_soil": "sand",
-    "growth_speed": 1.2,  # 0.0391666, #bbch per hour
-    "optimal_water": 45,
-    "optimal_ph": 6,
-    "max_high": 80,  # cm
-    "max_width": 15,  # Radius des Beschatteten Bereichs
-    "waterusage": 0.125,  # mm/Stunde
-    "earliest_appearance": "03-01",
-    "latest_appearance": "11-30",
-    "growth_period": 75,  # days
-    "optimal_growth_temperature": 20,
-    "min_growth_temperature": 5,
-    "max_growth_temperature": 30,
-}
 
-ReportCharacteristics = {  ##Melde
-    "name": "Report",
-    "stage1": {"Kc": 0.3, "depth": 30, "BBCH": 9, "radius": 0.5},
-    "stage2": {"Kc": 0.6, "depth": 30, "BBCH": 15, "radius": 4},
-    "stage3": {"Kc": 0.8, "depth": 60, "BBCH": 43, "radius": 10},
-    "stage4": {"Kc": 1.0, "depth": 60, "BBCH": 65, "radius": 15},
-    "is_weed": True,
-    "impact": "Bad",
-    "optimal_soil": "sand",
-    "growth_speed": 1.2,  # 0.0391666, #bbch per hour
-    "optimal_water": 45,
-    "optimal_ph": 6,
-    "max_high": 80,  # cm
-    "max_width": 15,  # Radius des Beschatteten Bereichs
-    "waterusage": 0.125,  # mm/Stunde
-    "earliest_appearance": "03-01",
-    "latest_appearance": "11-30",
-    "growth_period": 75,  # days
-    "optimal_growth_temperature": 20,
-    "min_growth_temperature": 5,
-    "max_growth_temperature": 30,
-}
-################################################################################################################
-# Crops
-carrot = Crop(carrotCharakteristics)
-cut_lettuce = Crop(cut_lettuceCharakteristics)
-# Weeds
-Couchgrass = Crop(CouchGrassCharacteristics)
-Thistle = Crop(thistleCharacteristics)
-Frenchherb = Crop(FrenchherbCharacteristics)
-Chickweed = Crop(ChickweedCharacteristics)
-Jacobsragwort = Crop(JacobsragwortCharacteristics)
-Report = Crop(ReportCharacteristics)
-weed_list = [Frenchherb, Jacobsragwort, Thistle, Couchgrass, Chickweed, Report]
-Crop_list = ["Carrot", "cut_lettuce"]
-# Soil
-sand = SoilType("Sand", 9, 15, 1, "light")
-slightly_loamy_sand = SoilType("Slightly Loamy Sand", 13, 15, 1, "light")
-strong_loamy_sand = SoilType("Strong Loamy Sand", 16, 15, 1, "medium")
-sandy_loam = SoilType("Sandy Loam", 19, 40, 10, "medium")
-silty_clay = SoilType("Silty Clay", 22, 40, 10, "medium")
-clayey_loam = SoilType("Clayey Loam", 17, 40, 10, "heavy")
-clay = SoilType("Clay", 14, 60, 25, "heavy")
-peat = SoilType("Peat", 30, 60, 25, "heavy")
-# Pests
-aphids = {
-    "name": "Aphids",
-    "period": "04-01:11-01",
-    "majorperiod": "01-05;30-06",
-    "impact": 3,
-    "EndangeredCrop": "RedCabage",
-    "min_temperature": 10,
-    "max_temperature": 35,
-}
-thrips = {
-    "name": "Thrips",
-    "period": "06-10:08-31",
-    "majorperiod": "15.07-15.08",
-    "impact": 3,
-    "EndangeredCrop": "WhiteCabage",
-    "min_temperature": 10,
-    "max_temperature": 35,
-}
-CabbageWhiteButterfly = {
-    "name": "Cabbage White Butterfly",
-    "period": "05-01:09-15",
-    "majorperiod": "01.06-31.07",
-    "impact": 2,
-    "min_temperature": 10,
-    "max_temperature": 35,
-}
-Cabbagefly = {
-    "name": "Cabbagefly",
-    "period": "04-15:05-15",
-    "period2": "06-15:10-15",
-    "majorperiod": "15-04,15-05",
-    "impact": 3,
-    "min_temperature": 10,
-    "max_temperature": 35,
-}
-# Illnesses
-Bacterialsoftrot = {
-    "name": "Bacterial soft rot",
-    "period": "05-01:10-01",
-    "impact": 2,
-    "min_temperature": 20,
-    "max_temperature": 30,
-}
-Leafspot = {
-    "name": "Leaf spot",
-    "period": "05-01:10-01",
-    "impact": 1,
-    "min_temperature": 20,
-    "max_temperature": 30,
-}
-# Falscher Mehltau
-Mildew = {
-    "name": " Mildew",
-    "period": "05-01:10-01",
-    "majorperiod": "01-05:01-08",
-    "impact": 2,
-    "min_temperature": 15,
-    "max_temperature": 25,
-}
-# Kohlhernie
-Clubroot = {
-    "name": "Clubroot",
-    "period": "05-01:10-01",
-    "majorperiod": "01-05:01-08",
-    "impact": 3,
-    "min_temperature": 18,
-    "max_temperature": 25,
-}
-# Ringfleckenkrankheit
-RingSpotDisease = {
-    "name": " Ring spot disease",
-    "period": "05-01:10-01",
-    "majorperiod": "01-05:01-08",
-    "impact": 3,
-    "min_temperature": 15,
-    "max_temperature": 25,
-}
-pest_list = [aphids, thrips, CabbageWhiteButterfly, Cabbagefly]
-illness_list = [Bacterialsoftrot, Leafspot, Mildew, Clubroot, RingSpotDisease]
+PESTLIST = [Plants.APHIDS, Plants.THRIPS, Plants.CABBAGEWHIEBUTTERFLY, Plants.CABBAGEFLY]
+ILNESSLIST = [Plants.BACTERIALSOFTROT, Plants.LEAFSPOT, Plants.MILDEW, Plants.CLUBROOT, Plants.RINGSPOTDISEASE]
+
 ############################################################################################################
 # Input data
 ############################################################################################################
-datainput = {
+PARAMETERS = {
     "Farmname": "MyFarm",
     "Fieldname": "Field_001",
-    "length": 50,
-    "width": 50,
-    "crop": carrot,
+    "length": 100,
+    "width": 100,
+    "crop": Plants.CARROT,
     "cropproportion": 1,
-    "soiltype": silty_clay,
+    "soiltype": SoilType("Loam", 30, 40, 20, "A"),
     "groundthickness": 30,
     "startdate": "2023-05-30 00:00:00",
     "enddate": "2023-10-30 00:00:00",
@@ -1119,6 +852,8 @@ datainput = {
     "irrigation_duration": 2,  # h
     "beginning_waterlevel": 40,
     "number_of_fields": 1,
+    "weeding_interval" : 10,      #Every 10 days
+    "harvest_strategy": "InTime",  # InTime, MaxYield, MaxQuality
 }
 ############################################################################################################
 # Simulation
