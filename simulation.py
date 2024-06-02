@@ -75,8 +75,7 @@ class Farm:
         while current_date <= datetime.strptime(
             PARAMETERS["enddate"], "%Y-%m-%d %H:%M:%S"
         ):
-            #if current_date.hour == 0:
-                #farm.farm_to_json_async()
+            
             date = current_date.strftime("%Y-%m-%d %H:00:00")
             current_date += hour_step
             weather_data = Farm.query_weather_data_by_date(
@@ -90,7 +89,7 @@ class Farm:
                 # field.im.set_data(illnesses)
 
             plt.pause(0.001)
-
+        farm.farm_to_json_async()
         input("Press Enter to close the simulation")
    
     def farm_to_json_async(
@@ -125,7 +124,7 @@ class Field:
             "name": self.name,
             "length": self.length,
             "width": self.width,
-            "crop": self.crop.plant["name"],
+            "crop": self.crop["name"],
             "proportion": self.proportion,
             "waterlevel": self.waterlevel,
             "soiltype": self.soiltype.name,
@@ -141,7 +140,7 @@ class Field:
 
         # Define color map for different categories
         cmap_plants = ListedColormap([
-            "#994c00", "#008000", "#FFA500", "#FFFF00", "#FF0000", "#00FF00", "#00FFFF", "#0000FF", "#800000"
+            "#994c00", "#008000", "#FFA500", "#FFFF00", "#FF0000", "#00FF00", "#00FFFF", "#0000FF"
         ])
 
         cmap_pests = ListedColormap([
@@ -826,9 +825,6 @@ def query_specific_value_by_date(csv_file, query_date, column_name):
         return None
 
 WEEDLIST = [Crop(Plants.FRENCHHERB), Crop(Plants.THISTLE), Crop(Plants.COUCHGRASS), Crop(Plants.CHICKWEED), Crop(Plants.REPORT),Crop(Plants.JACOBSRAGWORT)]
-CROPLIST = ["Carrot", "cut_lettuce"]
-
-
 PESTLIST = [Plants.APHIDS, Plants.THRIPS, Plants.CABBAGEWHIEBUTTERFLY, Plants.CABBAGEFLY]
 ILNESSLIST = [Plants.BACTERIALSOFTROT, Plants.LEAFSPOT, Plants.MILDEW, Plants.CLUBROOT, Plants.RINGSPOTDISEASE]
 
@@ -845,7 +841,7 @@ PARAMETERS = {
     "soiltype": SoilType("Loam", 30, 40, 20, "A"),
     "groundthickness": 30,
     "startdate": "2023-05-30 00:00:00",
-    "enddate": "2023-10-30 00:00:00",
+    "enddate": "2023-06-02 00:00:00",
     "debugmode": False,
     "irrigation_amount": 2,  # mm/m²*h
     "irrigation_frequency": 3,  # 1 times evry 7 hours
