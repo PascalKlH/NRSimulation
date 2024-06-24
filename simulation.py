@@ -143,13 +143,7 @@ class Field:
             "#994c00", "#008000", "#FFA500", "#FFFF00", "#FF0000", "#00FF00", "#00FFFF", "#0000FF"
         ])
 
-        cmap_pests = ListedColormap([
-            "#000000", "#000000", "#000000", "#000000"  # Colors for different pests
-        ])
-
-        cmap_illnesses = ListedColormap([
-            "#FF0000", "#FF0000", "#FF0000", "#FF0000", "#FF0000"  # Colors for different illnesses
-        ])
+       
 
         # Create separate arrays for each category
         plants_data, pests_data, illnesses_data = self.update_plot("")
@@ -841,7 +835,7 @@ PARAMETERS = {
     "soiltype": SoilType("Loam", 30, 40, 20, "A"),
     "groundthickness": 30,
     "startdate": "2023-05-30 00:00:00",
-    "enddate": "2023-06-02 00:00:00",
+    "enddate": "2023-06-06 00:00:00",
     "debugmode": False,
     "irrigation_amount": 2,  # mm/m²*h
     "irrigation_frequency": 3,  # 1 times evry 7 hours

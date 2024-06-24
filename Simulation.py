@@ -1,69 +1,67 @@
 import numpy as np
 
+
 PARAMETERS = {
-    "length": 100,
-    "width": 200,
+    "length": 10,
+    "width": 20,
     "row-distance": 2,
     "column-distance": 3,
     "initial-water-layer": 0.5,
+    "Plant": "lettuce"
 }
 
+class Crop:
+    def __init__(self,name):
+        self.name = name
+        self.cells = []
 class Simulation:
     def __init__(self, parameters):
-        self.parameters = parameters
-        self.num_rows = self.parameters["length"] // self.parameters["row-distance"]
-        self.num_cols = self.parameters["width"] // self.parameters["column-distance"]
-        self.size_layer = np.zeros((self.num_rows, self.num_cols))
-        self.water_layer = np.random.rand(self.parameters["length"], self.parameters["width"]) * self.parameters["initial-water-layer"]
-        self.plants_layer = np.zeros((self.parameters["length"], self.parameters["width"]))
+        self.parameters = parameters  # initializing the parameters
+        self.size_layer = np.zeros((self.parameters["length"], self.parameters["width"]))  # create a grid for the plant sizes
+        self.water_layer = np.full((self.parameters["length"], self.parameters["width"]), self.parameters["initial-water-layer"])  # create a grid for the water availabilities
+        self.plants_layer = np.zeros((self.parameters["length"], self.parameters["width"]))  # create a grid for the plants
+        self.crops_layer = np.full((self.parameters["length"], self.parameters["width"]),None,object)  # create a grid for the crops
         
-        self.planting()
     
     def planting(self):
-        # Calculate indices in reduced grid
-        row_indices = np.arange(0, self.num_rows) * self.parameters["row-distance"]
-        col_indices = np.arange(0, self.num_cols) * self.parameters["column-distance"]
-        row_grid, col_grid = np.meshgrid(row_indices, col_indices, indexing='ij')
-        
-        # Set plant locations in original layer
-        self.plants_layer[row_grid, col_grid] = 1
-        
-        # Set initial size for planted positions
+            row_indices = np.arange(0, self.parameters["length"], self.parameters["row-distance"])
+            col_indices = np.arange(0, self.parameters["width"], self.parameters["column-distance"])
+            
+            # Create meshgrid of indices
+            row_grid, col_grid = np.meshgrid(row_indices, col_indices, indexing='ij')
+            
+            # Set plants_layer where plants are planted
+            self.plants_layer[row_grid, col_grid] = 1
+            
+            # Create Crop objects where plants are planted
+            crop_names = np.where(self.plants_layer == 1, self.parameters["Plant"], None)
+            self.crops_layer = np.vectorize(Crop)(crop_names)
+            
+            # Print the name of the crop at each position where plants are planted
+            plant_positions = np.argwhere(self.plants_layer == 1)
+            for row, col in plant_positions:
+                crop_name = self.crops_layer[row, col].name
+                print(f"Crop at position ({row}, {col}): {crop_name}")
     
     def grow_plants(self):
-        # Get indices of plant positions
-        plant_indices = np.where(self.plants_layer == 1)
-        water_availabilities = self.water_layer[plant_indices]
-        
-        # Update plant sizes based on water availability
-        self.size_layer[plant_indices[0] // self.parameters["row-distance"], plant_indices[1] // self.parameters["column-distance"]] += 1 * water_availabilities
-
+        self.size_layer += self.water_layer*self.plants_layer #let the plants grow depending on the water availabilities
 
 
     def get_plant_info(self, row, col):
-        # Calculate indices based on row and column distances
-        row_idx = row // self.parameters["row-distance"]
-        col_idx = col // self.parameters["column-distance"]
-        
-        # Check bounds for reduced grid
-        if row_idx < self.num_rows and col_idx < self.num_cols:
-            size = self.size_layer[row_idx, col_idx]
-            # Calculate original indices for water_layer
-            orig_row_idx = row_idx * self.parameters["row-distance"]
-            orig_col_idx = col_idx * self.parameters["column-distance"]
-            if orig_row_idx < self.parameters["length"] and orig_col_idx < self.parameters["width"]:
-                water_availability = self.water_layer[orig_row_idx, orig_col_idx]
-                return {"size": size, "water_availability": water_availability}
+        if self.plants_layer[row, col] == 1: # check if a plant is planted at the given position
+            size = self.size_layer[row,col] #get the size of the plant at the given position
+            water_availability = self.water_layer[row, col] #get the water availability at the given position
+            return {"size": size, "water_availability": water_availability} #create a dictionary with the plant information
         return None
-    
+
+
 if __name__ == "__main__":
     sim = Simulation(PARAMETERS)
-    
-    for i in range(1000):
+    sim.planting()
+    for i in range(10):
         sim.grow_plants()
         
-        # Print plant information at specified intervals
-        if (i + 1) % 100 == 0:  # Print every 100 iterations
+        if (i + 1) % 100 == 0: 
             print(f"Iteration {i + 1}")
             for row in range(0, sim.parameters["length"], PARAMETERS["row-distance"]):
                 for col in range(0, sim.parameters["width"], PARAMETERS["column-distance"]):
