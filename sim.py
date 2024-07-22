@@ -9,9 +9,9 @@ from datetime import datetime, timedelta
 from scipy.ndimage import convolve
 
 PARAMETERS = {
-    "length": 60,
+    "length": 600,
     "width": 60,
-    "row-distance": 20,
+    "row-distance": 30,
     "column-distance": 30,
     "initial-water-layer": 1,
     "Plant": "lettuce",
@@ -24,10 +24,11 @@ PARAMETERS = {
 }
 
 class Crop:
-    def __init__(self, name):
+    def __init__(self, name, center):
         self.name = name
-        self.cells = np.array([], dtype=int).reshape(0, 2)
-        self.boundary_cells = np.array([], dtype=int).reshape(0, 2)
+        self.center = center  # Store the center of the plant
+        self.cells = np.array([center])
+        self.boundary_cells = np.array([center])
 
     def update_cells(self, new_cells):
         self.cells = np.vstack([self.cells, new_cells])
@@ -50,7 +51,7 @@ class Crop:
     def grow(self):
         if len(self.cells) == 1:
             if sim.water_layer[self.cells[0, 0], self.cells[0, 1]] >= 0.9:
-                r, c = self.cells[0]
+                r, c = self.center
                 mask = self.generate_circular_mask(1)
                 new_cells = np.argwhere(mask) + [r - 1, c - 1]
                 new_cells = new_cells[
@@ -82,26 +83,19 @@ class Crop:
 
             average_size = np.mean(sim.size_layer[self.cells[:, 0], self.cells[:, 1]])
             if average_size > 0.9:
-                new_boundary_cells = self.generate_new_cells(boundary_cells_indices)
-                new_cells = self.avoid_interference(new_boundary_cells)
-                if new_cells.size > 0:
+                new_boundary_cells = []
+                for r, c in boundary_cells_indices:
+                    mask = self.generate_circular_mask(1)
+                    new_cells = np.argwhere(mask) + [r - 1, c - 1]
+                    new_cells = new_cells[
+                        (new_cells[:, 0] >= 0) & (new_cells[:, 0] < sim.size_layer.shape[0]) & 
+                        (new_cells[:, 1] >= 0) & (new_cells[:, 1] < sim.size_layer.shape[1])
+                    ]
+                    new_cells = np.unique(new_cells, axis=0)
+                    new_cells = self.avoid_interference(new_cells)
                     sim.size_layer[new_cells[:, 0], new_cells[:, 1]] = 0.1
-                    self.update_cells(new_cells)
-
-    def generate_new_cells(self, boundary_cells_indices):
-        boundary_cells_indices = np.array(boundary_cells_indices)
-        masks = np.array([self.generate_circular_mask(1) for _ in range(len(boundary_cells_indices))])
-        new_cells = np.array([
-            np.argwhere(mask) + [r - 1, c - 1]
-            for (r, c), mask in zip(boundary_cells_indices, masks)
-        ])
-        new_cells = np.vstack(new_cells)
-        new_cells = new_cells[
-            (new_cells[:, 0] >= 0) & (new_cells[:, 0] < sim.size_layer.shape[0]) & 
-            (new_cells[:, 1] >= 0) & (new_cells[:, 1] < sim.size_layer.shape[1])
-        ]
-        new_cells = np.unique(new_cells, axis=0)
-        return new_cells
+                    new_boundary_cells.extend(new_cells)
+                self.update_cells(np.array(new_boundary_cells))
 
     def avoid_interference(self, new_cells):
         adjusted_cells = []
@@ -109,44 +103,23 @@ class Crop:
             if sim.crops_layer[r, c] is None:
                 adjusted_cells.append([r, c])
             else:
-                # Shift growth direction
-                direction = self.detect_interference_direction(r, c)
-                adjusted_r, adjusted_c = r + direction[0], c + direction[1]
+                # Adjust cells to avoid interference
+                adjusted_r, adjusted_c = self.adjust_growth_cell(r, c)
                 if 0 <= adjusted_r < sim.size_layer.shape[0] and 0 <= adjusted_c < sim.size_layer.shape[1]:
                     adjusted_cells.append([adjusted_r, adjusted_c])
         
         return np.array(adjusted_cells)
 
-    def detect_interference_direction(self, r, c):
-        # Check in the 4 directions to determine the direction to shift
-        directions = {
-            (0, -1): "left",
-            (0, 1): "right",
-            (-1, 0): "up",
-            (1, 0): "down"
-        }
-        interference_directions = []
-        
-        for direction, name in directions.items():
-            dr, dc = direction
-            new_r, new_c = r + dr, c + dc
-            if 0 <= new_r < sim.size_layer.shape[0] and 0 <= new_c < sim.size_layer.shape[1]:
-                if sim.crops_layer[new_r, new_c] is not None:
-                    interference_directions.append(direction)
-        
-        # If interference is detected in a particular direction, shift away from it
-        if interference_directions:
-            # Example logic: prioritize shifting right if left is blocked
-            if (-1, 0) in interference_directions:
-                return (1, 0)  # Move right
-            if (0, -1) in interference_directions:
-                return (0, 1)  # Move down
-            if (0, 1) in interference_directions:
-                return (-1, 0)  # Move up
-            if (1, 0) in interference_directions:
-                return (0, -1)  # Move left
-        
-        return (0, 0)  # No adjustment needed if no interference detected
+    def adjust_growth_cell(self, r, c):
+        # Adjust the position of the new cell to avoid overlap based on the direction
+        if c < self.center[1]:  # If interference is on the left, grow right
+            return r, c + 1
+        elif c > self.center[1]:  # If interference is on the right, grow left
+            return r, c - 1
+        elif r < self.center[0]:  # If interference is above, grow down
+            return r + 1, c
+        else:  # If interference is below, grow up
+            return r - 1, c
 
     @staticmethod
     def generate_circular_mask(radius):
@@ -155,7 +128,6 @@ class Crop:
         y, x = np.ogrid[:diameter, :diameter]
         mask = (x - center) ** 2 + (y - center) ** 2 <= radius ** 2
         return mask
-
 
 class Simulation:
     def __init__(self, parameters):
@@ -183,7 +155,8 @@ class Simulation:
         self.plants_layer[row_grid_flat, col_grid_flat] = True
 
         for r, c in zip(row_grid_flat, col_grid_flat):
-            self.crops_layer[r, c] = Crop(self.parameters["Plant"])
+            center = (r, c)
+            self.crops_layer[r, c] = Crop(self.parameters["Plant"], center)
             self.crops_layer[r, c].update_cells(np.array([[r, c]]))
 
     def grow_plants(self):
@@ -246,7 +219,7 @@ if __name__ == "__main__":
     app = create_app(sim)
 
     def run_server():
-        webbrowser.open_new('http://127.0.0.1:8050/')
+        #webbrowser.open_new('http://127.0.0.1:8050/')
         app.run_server(debug=True, use_reloader=False)
 
     server_thread = Thread(target=run_server)
