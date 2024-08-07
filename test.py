@@ -1,45 +1,89 @@
 import numpy as np
-import plotly.graph_objects as go
+import random
 
-def create_hemisphere(radius):
-    diameter = 2 * radius
-    hemisphere = np.zeros((diameter, diameter))
+def move_center_opposite(array, center_pos, random_pos):
+    rows, cols = array.shape
 
-    for x in range(diameter):
-        for y in range(diameter):
-            distance = np.sqrt((x - radius)**2 + (y - radius)**2)
-            if distance <= radius:
-                hemisphere[x, y] = np.sqrt(radius**2 - distance**2)
-            else:
-                hemisphere[x, y] = 0
-    return hemisphere
+    # Get the center and random positions
+    center_x, center_y = center_pos
+    random_x, random_y = random_pos
 
-def plot_hemisphere(hemisphere):
-    fig = go.Figure(data=go.Heatmap(
-        z=hemisphere,
-        colorscale='Viridis'
-    ))
+    # Calculate the direction from the center to the random element
+    direction_x = random_x - center_x
+    direction_y = random_y - center_y
 
-    fig.update_layout(
-        title='2D Heatmap of a Hemisphere',
-        xaxis_title='X (cm)',
-        yaxis_title='Y (cm)',
-        width=600,
-        height=600
-    )
+    # Calculate the opposite movement
+    if direction_x > 0:
+        movementx = -1
+    elif direction_x < 0:
+        movementx = 1
+    else:
+        movementx = 0
 
-    fig.show()
+    if direction_y > 0:
+        movementy = -1
+    elif direction_y < 0:
+        movementy = 1
+    else:
+        movementy = 0
 
-# Set the radius of the hemisphere
-radius = 11  # 10 cm
+    # Move the center to the opposite direction
+    new_center_x = center_x + movementx
+    new_center_y = center_y + movementy
 
-# Create the hemisphere
-hemisphere = create_hemisphere(radius)
+    # Check if the new center is within the bounds
+    if new_center_x < 0 or new_center_x >= rows:
+        new_center_x = center_x
 
-# Plot the hemisphere
-plot_hemisphere(hemisphere)
+    if new_center_y < 0 or new_center_y >= cols:
+        new_center_y = center_y
 
+    return new_center_x, new_center_y
 
+# Create a 5x5 array
+array = np.zeros((5, 5))
 
+# Set the center element initially to 1
+array[2, 2] = 1
 
+# Get the initial center position
+center_pos = (2, 2)
+
+# Number of iterations for the loop
+iterations = 10
+
+for _ in range(iterations):
+    # Get a random position
+    random_pos = (random.randint(0, 4), random.randint(0, 4))
+    
+    # Ensure the random position is not the same as the center position
+    while random_pos == center_pos:
+        random_pos = (random.randint(0, 4), random.randint(0, 4))
+
+    # Set the random position to 2
+    array[random_pos] = 2
+
+    # Move the center to the opposite direction
+    new_center_pos = move_center_opposite(array, center_pos, random_pos)
+    
+    # Update the array with the new center position
+    array[center_pos] = 0  # Clear the old center position
+    array[new_center_pos] = 1  # Set the new center position
+
+    # Print the result
+    print("Original array:")
+    print(array)
+    
+    # Clear the random position for the next iteration
+    array[random_pos] = 0
+
+    # Update center_pos for the next iteration
+    center_pos = new_center_pos
+
+    print("Updated array:")
+    print(array)
+    print("Center position:", center_pos)
+    print("Random position:", random_pos)
+    print("New center position:", new_center_pos)
+    print()
 
