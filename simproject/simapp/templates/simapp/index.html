@@ -1,4 +1,5 @@
 {% load static %}
+{% load crispy_forms_tags %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,9 +23,21 @@
         <!-- Form for Simulation Parameters -->
         <form id="parametersForm" method="post" action="{% url 'run_simulation' %}">
             {% csrf_token %}
+            {{form|crispy}}
+
+            <!-- Placeholder for Dynamic Crop Fields -->
+            <div id="cropFieldsContainer" class="mb-3"></div>
+
+            <!-- Buttons to Add/Remove Crop Fields -->
+            <div class="row mb-4">
+                <div class="col-12 text-center">
+                    <button type="button" id="addCropField" class="btn btn-success">Add Crop</button>
+                    <button type="button" id="removeCropField" class="btn btn-danger">Remove Crop</button>
+                </div>
+            </div>
+
             <div class="row">
                 <div class="col-12">
-                    {{ form.as_p }}
                     <button type="submit" class="btn btn-primary">Run Simulation</button>
                 </div>
             </div>

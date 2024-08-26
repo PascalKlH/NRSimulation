@@ -18,3 +18,7 @@ class SimulationForm(forms.Form):
     start_date = forms.DateField(label='Start Date', initial='2022-01-01')
     end_date = forms.DateField(label='End Date', initial='2022-05-01')
     initial_water_layer = forms.IntegerField(label='Initial Water Level (mm)', initial=1)
+class FieldRowForm(forms.Form):
+    width = forms.FloatField(label='Width', min_value=0)
+    crop_type = forms.CharField(label='Crop Type', max_length=100)
+    offset = forms.FloatField(label='Offset', min_value=0)

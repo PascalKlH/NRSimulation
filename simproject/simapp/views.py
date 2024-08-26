@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from .forms import SimulationForm
+from .forms import SimulationForm, FieldRowForm
 from .scripts.calculate import main  # Ensure this function exists and is correct
 
 def index(request):
@@ -24,3 +24,16 @@ def run_simulation(request):
         form = SimulationForm()
 
     return render(request, 'simapp/index.html', {'form': form})
+
+def configure_field(request):
+    if request.method == 'POST':
+        # Handle form submission
+        formset = FieldRowForm(request.POST)
+        if formset.is_valid():
+            # Process form data here
+            # You can save to the database or send to calculate.py
+            pass
+    else:
+        formset = FieldRowForm()
+    
+    return render(request, 'configure_field.html', {'formset': formset})

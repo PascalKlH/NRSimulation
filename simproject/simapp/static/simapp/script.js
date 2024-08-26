@@ -218,6 +218,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Initially display the first heatmap data
-        //displayHeatmap(0);
+        displayHeatmap(0);
     }
 });
