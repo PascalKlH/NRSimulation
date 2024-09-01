@@ -76,13 +76,3 @@ Um die aussenkante der Pflanze wird ein layer erstellt,in der die Pflanze wachse
 Abbildung von Konkurenz: Wenn in einem moeglichen Kaestchen schon eine Pflanze ist, kann dort keine weitere Pflanze wachsen
 Die Anzahl der Flaechen wird abhaengig von den schon vorhandenen Quadrate erstellt.
 """
-def create_sphere_in_array(array, center, radius):
-    x0, y0, z0 = center
-    length, width, height = array.shape
-    for x in range(length):
-        for y in range(width):
-            for z in range(height):
-                if np.sqrt((x - x0)**2 + (y - y0)**2 + (z - z0)**2) <= radius:
-                    array[x, y, z] = 1
-    return array
-

@@ -1,0 +1,18 @@
+/* Consistent size and center alignment for all plot containers */
+.plot-container {
+    width: 1000px;
+    height: 1000px;
+    margin: 0 auto; /* Center horizontally */
+}
+
+/* Align the slider with the plots */
+#dateSlider {
+    width: 1000px;
+    margin: 20px auto; /* Center horizontally */
+    display: block;
+}
+
+/* Custom styles for better visual appearance */
+.text-center {
+    text-align: center;
+}

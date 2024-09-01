@@ -32,12 +32,12 @@ class Farm:
             csv_file, query_date, "Globalstrahlung in J/cm²"
         )
         air_temperature = query_specific_value_by_date(
-            csv_file, query_date, "Lufttemperatur in °C"
+            csv_file, query_date, "Temp"
         )
         wind_speed = query_specific_value_by_date(
-            csv_file, query_date, "Windstärke in km/h"
+            csv_file, query_date, "Wind"
         )
-        rain = query_specific_value_by_date(csv_file, query_date, "Niederschlag in mm")
+        rain = query_specific_value_by_date(csv_file, query_date, "Rain")
         weather_data = [
             query_date,
             steanm_pressure,

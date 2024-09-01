@@ -1,18 +1,13 @@
 import sys
-import json
 import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
-from dash import Dash, dcc, html
-from dash.dependencies import Input, Output
-from threading import Thread, Lock
+from threading import Lock
 import time
 from datetime import datetime, timedelta
 from scipy.ndimage import convolve
-from plotly.subplots import make_subplots
 import random
 from concurrent.futures import ThreadPoolExecutor
-from multiprocessing import Pool, cpu_count
+from multiprocessing import cpu_count
 import msgpack
 import os
 
@@ -308,7 +303,7 @@ class Simulation:
             self.record_data(np.sum(self.size_layer), sum_growthrate, np.sum(self.water_layer), sum_overlap)        
         
         # Save the dataframe in a csv file called "data.csv"
-        output_dir = "nodeapp/public"
+        output_dir = "public"
         self.df.to_csv(os.path.join(output_dir, "data.csv"))
 
 
