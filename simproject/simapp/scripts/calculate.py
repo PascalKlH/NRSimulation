@@ -296,7 +296,7 @@ class Simulation:
             sum_overlap = sum(self.crops_layer[r, c].overlap for r in range(self.parameters["length"]) for c in range(self.parameters["width"]) if self.crops_layer[r, c] is not None)
             # Convert size_layer to a list
             size_layer_list = self.size_layer.tolist()
-            boundary
+            
             self.record_data(self.current_date, np.sum(self.size_layer), sum_growthrate, np.sum(self.water_layer), sum_overlap, size_layer_list)        
             self.current_date += timedelta(hours=1)
         # Sum the size layer to get the total size of the plants and save it together with the current date

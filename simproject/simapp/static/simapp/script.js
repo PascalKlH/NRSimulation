@@ -220,4 +220,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // Initially display the first heatmap data
         displayHeatmap(0);
     }
+<<<<<<< HEAD
 });
+=======
+});
+>>>>>>> a8b6987e74094664ade0de6a902412d782cfb234

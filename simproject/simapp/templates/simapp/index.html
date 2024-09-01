@@ -1,4 +1,8 @@
 {% load static %}
+<<<<<<< HEAD
+=======
+{% load crispy_forms_tags %}
+>>>>>>> a8b6987e74094664ade0de6a902412d782cfb234
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,9 +26,27 @@
         <!-- Form for Simulation Parameters -->
         <form id="parametersForm" method="post" action="{% url 'run_simulation' %}">
             {% csrf_token %}
+<<<<<<< HEAD
             <div class="row">
                 <div class="col-12">
                     {{ form.as_p }}
+=======
+            {{form|crispy}}
+
+            <!-- Placeholder for Dynamic Crop Fields -->
+            <div id="cropFieldsContainer" class="mb-3"></div>
+
+            <!-- Buttons to Add/Remove Crop Fields -->
+            <div class="row mb-4">
+                <div class="col-12 text-center">
+                    <button type="button" id="addCropField" class="btn btn-success">Add Crop</button>
+                    <button type="button" id="removeCropField" class="btn btn-danger">Remove Crop</button>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+>>>>>>> a8b6987e74094664ade0de6a902412d782cfb234
                     <button type="submit" class="btn btn-primary">Run Simulation</button>
                 </div>
             </div>
@@ -41,7 +63,10 @@
         <!-- Dropdown for Selecting Additional Plots -->
         <div class="row mt-4">
             <div class="col-12 text-center">
+<<<<<<< HEAD
                 <input type="range" id="dateSlider" min="0" max="0" value="0" class="form-range w-50 mx-auto">
+=======
+>>>>>>> a8b6987e74094664ade0de6a902412d782cfb234
                 <select id="plotSelector" class="form-select w-50 mx-auto">
                     <option value="plot2">Water Over Time</option>
                     <option value="plot3">Overlap Over Time</option>
@@ -67,7 +92,11 @@
         <div class="row mt-4">
             <div class="col-12 text-center">
                 <div id="heatmap" class="plot-container"></div>
+<<<<<<< HEAD
 
+=======
+                <input type="range" id="dateSlider" min="0" max="0" value="0" class="form-range w-50 mx-auto">
+>>>>>>> a8b6987e74094664ade0de6a902412d782cfb234
                 <label for="dateSlider" class="form-label">Select Date:</label>
                 <span id="sliderValue">0</span>
             </div>
