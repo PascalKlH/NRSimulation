@@ -1,39 +1,27 @@
-from django.shortcuts import render
-from django.http import JsonResponse
-from .forms import SimulationForm, FieldRowForm
+from django.shortcuts import render,redirect
+from django.http import JsonResponse, HttpResponseBadRequest
 from .scripts.calculate import main  # Ensure this function exists and is correct
+import json
+
 
 def index(request):
-    form = SimulationForm()
-    return render(request, 'simapp/index.html', {'form': form})
+    return render(request, 'simapp/index.html')
 
 def run_simulation(request):
     if request.method == 'POST':
-        form = SimulationForm(request.POST)
-        if form.is_valid():
-            # Extract data from the form
-            data = form.cleaned_data
-
-            # Call the simulation function
+        try:
+            # Parse JSON data from the request body
+            data = json.loads(request.body.decode('utf-8'))
+            
+            # Perform any processing needed, for example:
             result = main(data)  # Ensure this function returns data for plotting
-            print(result)
-            # Here you might save the results or prepare them for rendering
-            return JsonResponse(result,safe=False)  # Sending result as JSON for client-side processing
-
+            
+            return JsonResponse(result, safe=False)  # Sending result as JSON for client-side processing
+        except json.JSONDecodeError:
+            return HttpResponseBadRequest("Invalid JSON format")
     else:
-        form = SimulationForm()
+        return JsonResponse({'error': 'POST request required'}, status=405)
 
-    return render(request, 'simapp/index.html', {'form': form})
 
-def configure_field(request):
-    if request.method == 'POST':
-        # Handle form submission
-        formset = FieldRowForm(request.POST)
-        if formset.is_valid():
-            # Process form data here
-            # You can save to the database or send to calculate.py
-            pass
-    else:
-        formset = FieldRowForm()
-    
-    return render(request, 'configure_field.html', {'formset': formset})
+
+

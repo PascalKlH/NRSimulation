@@ -1,39 +1,156 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const form = document.getElementById('parametersForm');
+    const addRowButton = document.getElementById('addRowButton');
+    const runSimulationButton = document.getElementById('runSimulation');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    let rowCount = 0; // Assuming rowCount is declared globally
 
-    form.addEventListener('submit', function (event) {
+    // Event listener for adding a new row
+    addRowButton.addEventListener('click', function () {
+        rowCount++;
+        const rowList = document.getElementById('row-list');
+    
+        const newRow = document.createElement('div');
+        newRow.className = 'row-container';
+        newRow.id = `row-${rowCount}`;
+    
+        // Set the inner HTML for the new row
+        newRow.innerHTML = `
+            <div class="row mb-2">
+                <div class="col-md-3">
+                    <label for="plant-type-${rowCount}" class="form-label">Plant Type:</label>
+                </div>
+                <div class="col-md-9">
+                    <select id="plant-type-${rowCount}" class="form-control plant-type">
+                        <option value="lettuce">Lettuce</option>
+                        <option value="cabbage">Cabbage</option>
+                        <option value="spinach">Spinach</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-3">
+                    <label for="row-width-${rowCount}" class="form-label">Width of the row (cm):</label>
+                </div>
+                <div class="col-md-9">
+                    <input type="number" id="row-width-${rowCount}" class="form-control row-width" placeholder="Width in cm" value="30" min="1" max="30">
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-3">
+                    <label for="planting-type-${rowCount}" class="form-label">Planting Type:</label>
+                </div>
+                <div class="col-md-9">
+                    <select id="planting-type-${rowCount}" class="form-control planting-type">
+                        <option value="grid">Grid</option>
+                        <option value="alternating">Alternating</option>
+                        <option value="random">Random</option>
+                        <option value="empty">Empty</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-3">
+                    <label for="row-spacing-${rowCount}" class="form-label">Space between plants (cm):</label>
+                </div>
+                <div class="col-md-9">
+                    <input type="number" id="row-spacing-${rowCount}" class="form-control row-spacing" placeholder="Row spacing in cm" value="15" min="1" max="30">
+                </div>
+            </div>
+            <button class="btn btn-danger remove-btn">Delete Row</button>
+        `;
+    
+        // Append the new row to the DOM
+        rowList.appendChild(newRow);
+    
+        // Add event listener for the remove button
+        const removeButton = newRow.querySelector('.remove-btn');
+        removeButton.addEventListener('click', function () {
+            newRow.remove();
+        });
+    
+        // Add event listener for the planting type dropdown
+        const plantingTypeSelect = document.getElementById(`planting-type-${rowCount}`);
+        plantingTypeSelect.addEventListener('change', function() {
+            const plantingType = this.value;
+            const plantTypeField = document.getElementById(`plant-type-${rowCount}`).closest('.row');
+            const rowSpacingField = document.getElementById(`row-spacing-${rowCount}`).closest('.row');
+    
+            if (plantingType === 'empty') {
+                plantTypeField.style.display = 'none';
+                rowSpacingField.style.display = 'none';
+            } else {
+                plantTypeField.style.display = 'flex';
+                rowSpacingField.style.display = 'flex';
+            }
+        });
+    });
+    
+
+    runSimulationButton.addEventListener('click', function (event) {
+        alert("Simulation is running, please wait for the results to load");
         event.preventDefault();  // Prevent the default form submission
 
-        const formData = new FormData(form);
+        const rows = document.querySelectorAll('.row-container');
+        const rowData = [];
 
-        fetch(form.action, {
+        rows.forEach(row => {
+            const plantType = row.querySelector('.plant-type').value;
+            const plantingType = row.querySelector('.planting-type').value;
+            const rowWidth = row.querySelector('.row-width').value;
+            const rowSpacing = row.querySelector('.row-spacing').value;
+
+            rowData.push({
+                plantType: plantType,
+                plantingType: plantingType,
+                stripWidth: parseFloat(rowWidth),
+                rowSpacing: parseFloat(rowSpacing)
+            });
+        });
+        const requestData = {
+
+            //convert the values to integers
+            startDate: document.getElementById('startDate').value,
+            numIterations: parseInt(document.getElementById('numIterations').value),
+            stepSize: parseInt(document.getElementById('stepSize').value),
+            rowLength: parseInt(document.getElementById('rowLength').value),
+            rows: rowData
+        };
+        fetch('/run_simulation/', {
             method: 'POST',
-            body: formData,
             headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            }
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken  // Ensure the CSRF token is correctly included
+            },
+            body: JSON.stringify(requestData)
         })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Data received:', data);
-
-            // Call the function to handle and display the data
-            displayResults(data);
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(result => {
+            displayResults(result);
+            // Handle the response data here
         })
         .catch(error => {
             console.error('Error:', error);
         });
+        
     });
 
     function displayResults(data) {
-        console.log('Data in displayResults:', data);
-
+        console.log(data);
         const dates = data.time || [];
         const yields = data.yield || [];
         const growths = data.growth || [];
         const waters = data.water || [];
         const overlaps = data.overlap || [];
         const heatmapData = data.map || [];
+        const boundary = data.boundary || [];
+        const weed = data.weed || []; 
+        
 
         // Create traces for each data series
         const growthTrace = {
@@ -164,9 +281,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         const mapArray = heatmapData;
+        const weedArray = weed;
         const slider = document.getElementById('dateSlider');
         const sliderValueDisplay = document.getElementById('sliderValue');
-        const heatmap = document.getElementById('heatmap');
 
         // Initialize slider
         slider.max = mapArray.length - 1; // max value is the length of mapArray minus 1
@@ -181,25 +298,43 @@ document.addEventListener('DOMContentLoaded', function () {
         // Function to display the corresponding Heatmap data
         function displayHeatmap(index) {
             const mapData = mapArray[index];  // Access the data for the heatmap at the given index
-
+            const weedData = weedArray[index];
+        
             if (mapData) {
-                const data = [{
+                // Heatmap data trace
+                const heatmapTrace = {
                     z: mapData,  // mapData contains the 2D array for the heatmap
                     type: 'heatmap',
                     colorscale: [
-                        [0, 'rgb(100,50,0)'],  // Brown for all values = 0
+                        [0,    'rgb(100,50,0)'],  // Brown for all values = 0
                         [0.01, 'rgb(150,255,150)'],  // Light green for smaller values
-                        [1, 'rgb(0,100,0)']  // Dark green for higher values up to 50
+                        [1,    'rgb(0,100,0)']  // Dark green for higher values up to 50
                     ],
                     colorbar: {
                         title: 'Value',
                         titleside: 'right'
                     }
-                }];
+                };
+        
+                // Weed data trace with opacity
+                const weedTrace = {
+                    z: weedData,
+                    type: 'heatmap',
+                    colorscale: [
+                        [0,    'rgb(100,50,0)'],  // Brown for all values = 0
+                        [0.01, 'rgb(255,150,150)'],  // Light green for smaller values
+                        [1,    'rgb(100,0,0)']  // Dark green for higher values up to 50
 
+                    ],
+                    colorbar: {
+                        title: 'Weed Presence',
+                        titleside: 'left',  // Move the colorbar to the left side
+                        x: -0.15,  // Adjust the x position to make sure it is properly placed on the left
+                    },
+                    opacity: 0.5  // Adjust opacity so that both layers are visible
+                };
                 const layout = {
-                    //take the first date of the array and add the index to it
-                    title: `Heatmap for Hour ${index} on ${dates[0]}`,
+                    title: `Heatmap on ${dates[index]}`,
                     xaxis: {
                         title: 'X Axis',
                         showgrid: false,
@@ -210,14 +345,23 @@ document.addEventListener('DOMContentLoaded', function () {
                     },
                     margin: { t: 40, r: 20, b: 40, l: 50 },
                 };
-
-                Plotly.newPlot('heatmap', data, layout);
+                const selectedOption = document.getElementById('heatmapOption').value;
+                if (selectedOption === 'plants') {
+                    Plotly.newPlot('heatmap', [heatmapTrace], layout);
+                }
+                else if (selectedOption === 'weeds') {
+                    Plotly.newPlot('heatmap', [weedTrace], layout);
+                }
+                else if (selectedOption === 'plantsweeds') {
+                    Plotly.newPlot('heatmap', [heatmapTrace, weedTrace], layout);
+                }
             } else {
                 console.error(`No data found for index ${index}.`);
             }
         }
 
-        // Initially display the first heatmap data
-        displayHeatmap(0);
+        // Display the initial heatmap
+        displayHeatmap(1);
     }
-});
+}
+);

@@ -16,3 +16,36 @@
 .text-center {
     text-align: center;
 }
+.row-container {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+.row-controls input {
+    width: 100px;
+    margin-right: 10px;
+}
+.row-controls select {
+    width: 150px;
+    margin-right: 10px;
+}
+.remove-btn {
+    margin-top: 10px;
+}
+.row-controls {
+    display: flex;
+    flex-wrap: wrap; /* Optional: Wenn die Zeile zu lang ist, wird sie umgebrochen */
+    gap: 10px; /* Abstand zwischen den Elementen */
+    align-items: center; /* Zentriert die Elemente vertikal */
+}
+
+.row-controls select,
+.row-controls input {
+    flex: 1; /* Alle Elemente teilen den verfügbaren Platz gleichmäßig auf */
+    min-width: 120px; /* Mindestbreite der Felder */
+}
+
+.row-controls .remove-btn {
+    flex: none; /* Entfernt die Flexibilität, damit der Button seine eigene Größe behält */
+}

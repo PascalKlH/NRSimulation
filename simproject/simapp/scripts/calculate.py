@@ -7,12 +7,6 @@ from scipy.ndimage import convolve
 import random
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import cpu_count
-from django.conf import settings
-import os
-
-
-
-
 
 class Crop:
     def __init__(self, name, center, parameters, sim):
@@ -27,11 +21,13 @@ class Crop:
         self.overlap = 0 # Overlap with other plants
         self.previous_growth = 0 # Growth rate of the previous hour
 
-    def grow(self):
+    def grow(self,size_layer,obj_layer,pos_layer):
         current_time = self.sim.current_date
-        t_diff_hours = (current_time - self.parameters["start_date"]).total_seconds() / 3600.0
+        t_diff_hours = (current_time - datetime.strptime(self.sim.date, '%Y-%m-%d:%H:%M:%S')).total_seconds() / (3600.0)
         growth= self.parameters["k"] * (1 - self.overlap)* random.uniform(0.9, 1.1)
-        growth_rate = self.parameters["H_max"] * self.parameters["n"] * (1 - np.exp(-growth * t_diff_hours))**(self.parameters["n"] - 1) * self.parameters["k"] * np.exp(-self.parameters["k"] * t_diff_hours)
+
+        growth_rate = self.parameters["H_max"] * self.parameters["n"] * (1 - np.exp(-growth * t_diff_hours))**(self.parameters["n"] - 1) * self.parameters["k"] * np.exp(-self.parameters["k"] * t_diff_hours)*self.sim.stepsize
+        
         self.previous_growth = growth_rate
         rounded_radius_before_growth = int(np.round(self.radius / 2))
         self.radius += growth_rate 
@@ -40,30 +36,30 @@ class Crop:
         # If the radius is the same as before, we can simply add the growth rate to the circular mask
         if rounded_radius == rounded_radius_before_growth:
             mask = self.generate_circular_mask(rounded_radius)
-            crop_mask = np.zeros_like(self.sim.size_layer, dtype=bool)
+            crop_mask = np.zeros_like(size_layer, dtype=bool)
             
-            r_start = max(self.center[0] - rounded_radius, 0)
-            r_end = min(self.center[0] + rounded_radius + 1, self.sim.size_layer.shape[0])
-            c_start = max(self.center[1] - rounded_radius, 0)
-            c_end = min(self.center[1] + rounded_radius + 1, self.sim.size_layer.shape[1])
+            r_start =int(max(self.center[0] - rounded_radius, 0))
+            r_end = int(min(self.center[0] + rounded_radius + 1, size_layer.shape[0]))
+            c_start = int(max(self.center[1] - rounded_radius, 0))
+            c_end = int(min(self.center[1] + rounded_radius + 1, size_layer.shape[1]))
             
-            mask_r_start = r_start - (self.center[0] - rounded_radius)
-            mask_r_end = mask_r_start + (r_end - r_start)
-            mask_c_start = c_start - (self.center[1] - rounded_radius)
-            mask_c_end = mask_c_start + (c_end - c_start)
+            mask_r_start = int(r_start - (self.center[0] - rounded_radius))
+            mask_r_end = int(mask_r_start + (r_end - r_start))
+            mask_c_start = int(c_start - (self.center[1] - rounded_radius))
+            mask_c_end = int(mask_c_start + (c_end - c_start))
             
             crop_mask[r_start:r_end, c_start:c_end] = mask[mask_r_start:mask_r_end, mask_c_start:mask_c_end]
-            np.add.at(self.sim.size_layer, np.where(crop_mask), growth_rate)
+            np.add.at(size_layer, np.where(crop_mask), growth_rate)
             return
         #move the plant if the max is not reached
         if self.moves < self.parameters["max_moves"]:
-            r_min, r_max = self.center[0] - rounded_radius - 1, self.center[0] + rounded_radius + 2
-            c_min, c_max = self.center[1] - rounded_radius - 1, self.center[1] + rounded_radius + 2
+            r_min, r_max = int(self.center[0] - rounded_radius - 1), int(self.center[0] + rounded_radius + 2)
+            c_min, c_max = int(self.center[1] - rounded_radius - 1), int(self.center[1] + rounded_radius + 2)
             # Check if the new position is within the boundaries of the field
-            if 0 <= r_min < self.sim.size_layer.shape[0] and 0 <= r_max <= self.sim.size_layer.shape[0] and \
-            0 <= c_min < self.sim.size_layer.shape[1] and 0 <= c_max <= self.sim.size_layer.shape[1]:
+            if 0 <= r_min < size_layer.shape[0] and 0 <= r_max <= size_layer.shape[0] and \
+            0 <= c_min < size_layer.shape[1] and 0 <= c_max <= size_layer.shape[1]:
 
-                snipped_size_layer = self.sim.size_layer[r_min:r_max, c_min:c_max]
+                snipped_size_layer = size_layer[r_min:r_max, c_min:c_max]
                 mask = np.where(snipped_size_layer > 0, 1, 0)
                 
                 snipped_cells = self.cells[
@@ -95,39 +91,39 @@ class Crop:
                         direction_x /= norm
                         direction_y /= norm
 
-                    movement_x = int(round(-direction_x))
-                    movement_y = int(round(-direction_y))
+                    movement_x = round(int(-direction_x))
+                    movement_y = round(int(-direction_y))
                     # Check if the movement is non-zero
                     if movement_x != 0 or movement_y != 0:
                         new_center_x, new_center_y = center_x + movement_x, center_y + movement_y
 
                         # Check if the new position is within the boundaries of the field
-                        if 0 <= new_center_x < self.sim.size_layer.shape[0] and 0 <= new_center_y < self.sim.size_layer.shape[1]:
+                        if 0 <= new_center_x < size_layer.shape[0] and 0 <= new_center_y < size_layer.shape[1]:
                             self.center = (new_center_x, new_center_y)
-                            self.sim.plants_layer[center_x, center_y] = False
-                            self.sim.plants_layer[new_center_x, new_center_y] = True
-                            self.sim.crops_layer[center_x, center_y] = None
-                            self.sim.crops_layer[new_center_x, new_center_y] = self
+                            pos_layer[center_x, center_y] = False
+                            pos_layer[new_center_x, new_center_y] = True
+                            obj_layer[center_x, center_y] = None
+                            obj_layer[new_center_x, new_center_y] = self
                             self.moves += 1
 
                             # Update cells and boundary to avoid self-interference
                             self.update_cells_and_boundary()
 
         mask = self.generate_circular_mask(rounded_radius)
-        crop_mask = np.zeros_like(self.sim.size_layer, dtype=bool)
+        crop_mask = np.zeros_like(size_layer, dtype=bool)
         
-        r_start = max(self.center[0] - rounded_radius, 0)
-        r_end = min(self.center[0] + rounded_radius + 1, self.sim.size_layer.shape[0])
-        c_start = max(self.center[1] - rounded_radius, 0)
-        c_end = min(self.center[1] + rounded_radius + 1, self.sim.size_layer.shape[1])
+        r_start = int(max(self.center[0] - rounded_radius, 0))
+        r_end = int(min(self.center[0] + rounded_radius + 1, size_layer.shape[0]))
+        c_start = int(max(self.center[1] - rounded_radius, 0))
+        c_end = int(min(self.center[1] + rounded_radius + 1, size_layer.shape[1]))
         
-        mask_r_start = r_start - (self.center[0] - rounded_radius)
-        mask_r_end = mask_r_start + (r_end - r_start)
-        mask_c_start = c_start - (self.center[1] - rounded_radius)
-        mask_c_end = mask_c_start + (c_end - c_start)
+        mask_r_start = int(r_start - (self.center[0] - rounded_radius))
+        mask_r_end = int(mask_r_start + (r_end - r_start))
+        mask_c_start = int(c_start - (self.center[1] - rounded_radius))
+        mask_c_end = int(mask_c_start + (c_end - c_start))
         
         crop_mask[r_start:r_end, c_start:c_end] = mask[mask_r_start:mask_r_end, mask_c_start:mask_c_end]
-        np.add.at(self.sim.size_layer, np.where(crop_mask), growth_rate)
+        np.add.at(size_layer, np.where(crop_mask), growth_rate)
         # Update the cells and boundary
         if self.radius == 0:
             self.cells[self.parameters["W_max"] // 2, self.parameters["W_max"] // 2] = 1
@@ -150,112 +146,223 @@ class Crop:
         mask_r_end = mask.shape[0] if r_end <= self.cells.shape[0] else mask.shape[0] - (r_end - self.cells.shape[0])
         mask_c_start = 0 if c_start >= 0 else -c_start
         mask_c_end = mask.shape[1] if c_end <= self.cells.shape[1] else mask.shape[1] - (c_end - self.cells.shape[1])
+        
         self.cells[r_start:r_end, c_start:c_end] = mask[mask_r_start:mask_r_end, mask_c_start:mask_c_end]
         self.boundary = convolve(self.cells, np.array([[0, 1, 0], [1, 0, 1], [0, 1, 0]]), mode='constant', cval=0.0) ^ self.cells
+
+
+       # Ensure r_min, r_max, c_min, c_max are within valid range
+        r_min = int(max(self.center[0] - rounded_radius - 1, 0))
+        r_max = int(min(self.center[0] + rounded_radius + 2, self.sim.boundary_layer.shape[0]))
+        c_min = int(max(self.center[1] - rounded_radius - 1, 0))
+        c_max = int(min(self.center[1] + rounded_radius + 2, self.sim.boundary_layer.shape[1]))
+
+        # Check if the boundary expands outside the array
+        if r_min == 0 or r_max == self.sim.boundary_layer.shape[0] or c_min == 0 or c_max == self.sim.boundary_layer.shape[1]:
+            return
+
+        # Create a slice of the boundary array to assign
+        new_boundary_slice = self.boundary[
+            self.parameters["W_max"] // 2 - rounded_radius - 1:self.parameters["W_max"] // 2 + rounded_radius + 2,
+            self.parameters["W_max"] // 2 - rounded_radius - 1:self.parameters["W_max"] // 2 + rounded_radius + 2
+        ]
+
+        # Add the new boundary slice to the existing boundary_layer
+        self.sim.boundary_layer[r_min:r_max, c_min:c_max] += new_boundary_slice.astype(int)
+
+
+
 
     @staticmethod
     def generate_circular_mask(radius):
         '''
-        Generate a circular mask with the given radius
+        Generate a circular mask with the given radius.
         '''
         y, x = np.ogrid[-radius: radius + 1, -radius: radius + 1]
         mask = x**2 + y**2 <= radius**2
         return mask
 
+
 class Simulation:
-    def __init__(self, parameters):
-        self.parameters = parameters
-        self.size_layer = np.zeros((self.parameters["length"], self.parameters["width"]))
-        self.water_layer = np.full((self.parameters["length"], self.parameters["width"]), self.parameters["initial-water-layer"])
-        self.plants_layer = np.zeros((self.parameters["length"], self.parameters["width"]), dtype=bool)
-        self.crops_layer = np.full((self.parameters["length"], self.parameters["width"]), None, dtype=object)
+    def __init__(self, input_data):
+        length = int(input_data["rowLength"])
+        self.input_data = input_data
+        self.total_width = int(sum(row['stripWidth'] for row in input_data['rows']))
+        self.water_layer = np.full((length, self.total_width), 0.5, dtype=float)
+        self.crop_size_layer = np.zeros((length, self.total_width), dtype=float)
+        self.crops_pos_layer = np.zeros((length, self.total_width), dtype=bool)
+        self.crops_obj_layer = np.full((length, self.total_width), None, dtype=object)
+        self.boundary_layer = np.zeros((length, self.total_width), dtype=int)
+        self.weeds_size_layer = np.zeros((length, self.total_width), dtype=float)
+        self.weeds_obj_layer = np.full((length, self.total_width),None, dtype=object)
+        self.weeds_pos_layer = np.zeros((length, self.total_width), dtype=bool)
         self.lock = Lock()
-        self.current_date = self.parameters["start_date"]
+        #add hours to the current date
+        self.date= input_data["startDate"]+":00:00:00"
+        self.current_date = datetime.strptime(self.date, '%Y-%m-%d:%H:%M:%S')
         self.running = True
         self.plot_update_flag = False
-        self.df = pd.DataFrame(columns=["Date","Yield", "Growth", "Water", "Overlap","Map"])
-        "Wind","Temperature","Humidity"
-    def planting(self, num_plants=30):
-        pattern = self.parameters["pattern"]
-        if pattern == 'grid':
-            self._grid_planting()
-        elif pattern == 'alternating':
-            self._alternating_planting()
-        elif pattern == 'random':
-            self._random_planting(num_plants)
+        self.df = pd.DataFrame(columns=["Date","Yield", "Growth", "Water", "Overlap","Map","Boundary","Weed"])
+        self.stepsize= int(input_data["stepSize"])
 
-    def _grid_planting(self):
-        '''
-        Plant the crops in a grid pattern
-        '''
-        half_row_dist = self.parameters["W_max"] // 2
-        half_col_dist = self.parameters["W_max"] // 2
+    def planting(self):
+        current_col = 0
+        plant_parameters_map = {
+            'lettuce': lettuce,
+            'cabbage': cabbage,
+            'spinach': spinach,
+        }
+        for row in self.input_data['rows']:
+            strip_width = row['stripWidth']
+            start_col = current_col
+            end_col = current_col + strip_width
+            plant_parameters = plant_parameters_map.get(row['plantType'], None)
+            if plant_parameters is None:
+                raise ValueError(f"Unknown plant type: {row['plantType']}")
 
-        row_indices = np.arange(half_row_dist, self.parameters["length"] - half_row_dist, self.parameters["row-distance"])
-        col_indices = np.arange(half_col_dist, self.parameters["width"] - half_col_dist, self.parameters["column-distance"])
+            strip_parameters = {
+                "plantType": plant_parameters,
+                "plantingType": row['plantingType'],
+                "rowDistance": row['rowSpacing'],
+                "columnDistance": strip_width,
+                "rowLength": self.input_data['rowLength'],
+            }
+
+            if strip_parameters["plantingType"] == 'grid':
+                self._grid_planting(strip_parameters, start_col, end_col,row,plant_parameters)
+            elif strip_parameters["plantingType"] == 'alternating':
+                self._alternating_planting(strip_parameters, start_col, end_col,row,plant_parameters)
+            elif strip_parameters["plantingType"] == 'random':
+                self._random_planting(strip_parameters, start_col, end_col, row,plant_parameters)
+            elif strip_parameters["plantingType"] == 'empty':
+                self._empty_planting()
+            current_col += strip_width
+    def _empty_planting(self):     
+        pass
+    def _grid_planting(self, strip_parameters, start_col, end_col,row,plantparameters):
+        plant_distance = strip_parameters["rowDistance"]###Space between plants
+        row_length = strip_parameters["rowLength"]  ###länge der Reihe
+
+        # Calculate offsets
+        offset = plant_distance // 2
+ 
+
+        # Adjust indices to ensure plants are not on the edges
+        row_start = offset
+        row_end = row_length - offset
+        col_start = start_col + offset
+        col_end = end_col - offset
+
+        # Generate grid indices with adjusted bounds
+        row_indices = np.arange(row_start, row_end, plant_distance)
+        col_indices = np.arange(col_start, col_end, plant_distance)
 
         row_grid, col_grid = np.meshgrid(row_indices, col_indices, indexing='ij')
-        self.plants_layer[row_grid, col_grid] = True
 
-        crop_array = np.array([Crop(self.parameters["Plant"], (r, c), self.parameters, self) for r in row_indices for c in col_indices])
-        self.crops_layer[row_grid, col_grid] = crop_array.reshape(row_grid.shape)
+        self.crops_pos_layer[row_grid, col_grid] = True
+        crop_array = np.array([Crop(row["plantType"], (r, c), plantparameters, self)
+                            for r in row_indices for c in col_indices])
+        self.crops_obj_layer[row_grid, col_grid] = crop_array.reshape(row_grid.shape)
 
-    def _alternating_planting(self):
+    def _alternating_planting(self, strip_parameters, start_col, end_col,row,plant_parameters):
         '''
         Plant the crops in an alternating pattern
         '''
-        half_row_dist = self.parameters["W_max"] // 3
-        half_col_dist = self.parameters["W_max"] // 3
+        row_distance = strip_parameters["rowDistance"]
+        column_distance = strip_parameters["columnDistance"]
+        row_length = strip_parameters["rowLength"]
 
-        row_indices = np.arange(half_row_dist, self.parameters["length"] - half_row_dist, self.parameters["row-distance"])
-        col_indices = np.arange(half_col_dist, self.parameters["width"] - half_col_dist, self.parameters["column-distance"])
+        half_row_dist = row_distance // 3
+        half_col_dist = column_distance // 3
+        # Create grid indices for odd and even rows
+        row_indices = np.arange(half_row_dist, row_length, row_distance)
+        col_indices_odd = np.arange(start_col, end_col, column_distance)
+        col_indices_even = col_indices_odd + column_distance // 2
 
-        col_grid_odd = col_indices
-        col_grid_even = col_indices + self.parameters["column-distance"] // 2
-        col_grid_even = col_grid_even[col_grid_even < self.parameters["width"]]
+        # Clip the indices to stay within bounds
+        col_indices_even = col_indices_even[col_indices_even < end_col]
 
+        # Create masks for alternating rows
         row_grid_odd = row_indices[::2]
         row_grid_even = row_indices[1::2]
 
-        row_grid_odd, col_grid_odd = np.meshgrid(row_grid_odd, col_grid_odd, indexing='ij')
-        row_grid_even, col_grid_even = np.meshgrid(row_grid_even, col_grid_even, indexing='ij')
+        # Apply planting
+        row_grid_odd, col_grid_odd = np.meshgrid(row_grid_odd, col_indices_odd, indexing='ij')
+        row_grid_even, col_grid_even = np.meshgrid(row_grid_even, col_indices_even, indexing='ij')
 
-        row_grid = np.concatenate((row_grid_odd.flatten(), row_grid_even.flatten()))
-        col_grid = np.concatenate((col_grid_odd.flatten(), col_grid_even.flatten()))
+        # Place plants
+        self.crops_pos_layer[row_grid_odd, col_grid_odd] = True
+        self.crops_pos_layer[row_grid_even, col_grid_even] = True
 
-        self.plants_layer[row_grid, col_grid] = True
+        # Vectorized crop placement
+        self.crops_obj_layer[row_grid_odd, col_grid_odd] = np.vectorize(lambda r, c: Crop(row['plantType'], (r, c), plant_parameters, self))(row_grid_odd, col_grid_odd)
+        self.crops_obj_layer[row_grid_even, col_grid_even] = np.vectorize(lambda r, c: Crop(row['plantType'], (r, c), plant_parameters, self))(row_grid_even, col_grid_even)
 
-        crop_array = np.array([Crop(self.parameters["Plant"], (r, c), self.parameters, self) for r, c in zip(row_grid, col_grid)])
-        self.crops_layer[row_grid, col_grid] = crop_array
 
-    def _random_planting(self, num_plants):
+    def _random_planting(self, strip_parameters, start_col, end_col,row,plant_parameters):
         '''
         Plant the crops in a random pattern
         '''
-        total_cells = self.parameters["length"] * self.parameters["width"]
-        all_positions = np.arange(total_cells)
-        plant_positions = np.random.choice(all_positions, num_plants, replace=False)
+        num_plants = int(strip_parameters['columnDistance'] * strip_parameters["rowLength"] / strip_parameters['rowDistance'])
+        total_positions = strip_parameters["rowLength"] * (end_col - start_col)
+        
+        # Randomly select positions within the strip
+        plant_positions = np.random.choice(total_positions, num_plants, replace=False)
+        row_indices, col_indices = np.unravel_index(plant_positions, (strip_parameters["rowLength"], end_col - start_col))
+        col_indices += start_col  # Adjust column indices based on the strip's starting position
 
-        row_indices, col_indices = np.unravel_index(plant_positions, (self.parameters["length"], self.parameters["width"]))
+        # Place plants
+        self.crops_pos_layer[row_indices, col_indices] = True
+        self.crops_obj_layer[row_indices, col_indices] = np.vectorize(lambda r, c: Crop(row['plantType'], (r, c), plant_parameters, self))(row_indices, col_indices)
 
-        self.plants_layer[row_indices, col_indices] = True
+    def grow_weeds(self):
+        '''
+        Grow the weeds in parallel using multiple threads or processes to speed up the simulation
+        '''
+        with self.lock:
+            # Extract weeds that are present in the weeds_layer
 
-        crop_array = np.array([Crop(self.parameters["Plant"], (r, c), self.parameters, self) for r, c in zip(row_indices, col_indices)])
-        self.crops_layer[row_indices, col_indices] = crop_array
+            weeds = self.weeds_obj_layer[self.weeds_pos_layer] 
+            if len(weeds) > 0:
+                
+                weed_list = np.ravel(weeds)
+                np.random.shuffle(weed_list)
+                def grow_subset(subset):
+                    for weed in subset:
+                        weed.grow(self.weeds_size_layer,self.weeds_obj_layer,self.weeds_pos_layer)
+                num_cores = cpu_count()
+                weed_subsets = np.array_split(weed_list, num_cores)
+                with ThreadPoolExecutor(max_workers=num_cores) as executor:
+                    futures = [executor.submit(grow_subset, subset) for subset in weed_subsets]
+                    for future in futures:
+                        future.result()
+            weed_x = np.random.randint(0, self.crop_size_layer.shape[0], 1)
+            weed_y = np.random.randint(0, self.crop_size_layer.shape[1], 1)
+            size_at_spot = self.crop_size_layer[weed_x, weed_y]
+            random = np.random.uniform(0, 1+size_at_spot, 1)
+            if random <=0.2:
+                self.weeds_pos_layer[weed_x, weed_y] = True
+                self.weeds_obj_layer[weed_x, weed_y] = Crop("weed", (weed_x, weed_y),weed, self)
+
+
+
+
+#
+
     def grow_plants(self):
         '''
         Grow the plants in parallel using multiple threads or processes to speed up the simulation
         '''
         with self.lock:
             # Extract crops that are present in the plants_layer
-            crops = self.crops_layer[self.plants_layer]
+            crops = self.crops_obj_layer[self.crops_pos_layer]
             crop_list = np.ravel(crops)  # Flatten the array
             np.random.shuffle(crop_list)  # Shuffle the crop list
 
             # Function to grow plants in a specific subset
             def grow_subset(subset):
                 for crop in subset:
-                    crop.grow()
+                    crop.grow(self.crop_size_layer,self.crops_obj_layer,self.crops_pos_layer)
 
             # Split the crop list into approximately equal subsets
             num_cores = cpu_count()
@@ -267,73 +374,60 @@ class Simulation:
                 for future in futures:
                     future.result()  # Wait for all threads to complete
 
-            self.plot_update_flag = True
+
 
     def run_simulation(self):
-        yield_per_size = self.parameters["Yield"] / self.parameters["size_per_plant"]
+
+        yield_per_size = 0.8 / 7068.3
         
         # Start a timer to keep track of the simulation performance
         start_time = time.time()
         
-        while self.current_date < self.parameters["end_date"]:
+        while self.current_date < datetime.strptime("2022-12-02:00:00:00", '%Y-%m-%d:%H:%M:%S'):
             self.grow_plants()
-            self.current_date += timedelta(hours=1)
+            self.grow_weeds()
+            self.plot_update_flag = True
             # Save all data in a dataframe as well as the date
-            sum_growthrate = sum(self.crops_layer[r, c].previous_growth for r in range(self.parameters["length"]) for c in range(self.parameters["width"]) if self.crops_layer[r, c] is not None)
-            sum_overlap = sum(self.crops_layer[r, c].overlap for r in range(self.parameters["length"]) for c in range(self.parameters["width"]) if self.crops_layer[r, c] is not None)
+            sum_growthrate = sum(self.crops_obj_layer[r, c].previous_growth for r in range(self.input_data["rowLength"]) for c in range(self.total_width) if self.crops_obj_layer[r, c] is not None)
+            sum_overlap = sum(self.crops_obj_layer[r, c].overlap for r in range(self.input_data["rowLength"]) for c in range(self.total_width) if self.crops_obj_layer[r, c] is not None)
             # Convert size_layer to a list
-            size_layer_list = self.size_layer.tolist()
-            self.record_data(self.current_date, np.sum(self.size_layer), sum_growthrate, np.sum(self.water_layer), sum_overlap, size_layer_list)        
-        
+            crop_size_layer_list = self.crop_size_layer.tolist()
+            weed_size_layer_list = self.weeds_size_layer.tolist()
+            #take the boundary out of the crop object and and place it on the field where it belongs, use the plants layer to determine where the plants are to create a boundary_layer
+            boundary_list = self.boundary_layer.tolist()
+
+            
+            self.record_data(self.current_date, np.sum(self.crop_size_layer), sum_growthrate, np.sum(self.water_layer), sum_overlap, crop_size_layer_list,boundary_list,weed_size_layer_list)        
+            self.current_date += timedelta(hours=self.stepsize)
+
         # Sum the size layer to get the total size of the plants and save it together with the current date
-        sum_size = np.sum(self.size_layer)
+        sum_size = np.sum(self.crop_size_layer)
         sum_yield = sum_size * yield_per_size
-        print(f"Total size of the plants on {self.current_date}: {sum_yield}")
+        print(f"Total yield: {sum_yield:.2f}")
         
         # End the timer and print the time taken to run the simulation
         end_time = time.time()
         
         # Calculate the time per plant
-        time_per_plant = (end_time - start_time) / np.sum(self.plants_layer)
-        
+        time_per_plant = (end_time - start_time) / np.sum(self.crops_pos_layer)
+        date= self.input_data["startDate"]+":00:00:00"
+        start_date = datetime.strptime(date, '%Y-%m-%d:%H:%M:%S')
         # Then divide by the number of days
-        time_per_plant /= (self.parameters["end_date"] - self.parameters["start_date"]).days
+        time_per_plant /= (datetime.strptime("2022-12-02:00:00:00", '%Y-%m-%d:%H:%M:%S') - start_date).days
         print(f"Time taken to run the simulation, per day and plant: {time_per_plant:.6f} seconds")
 
 
         
 
-    def record_data(self, date, size, growth_rate, water_level, overlap, size_layer):
-        new_row = pd.DataFrame([[date, size, growth_rate, water_level, overlap, size_layer]], columns=self.df.columns)
+    def record_data(self, date, size, growth_rate, water_level, overlap, size_layer,boundary,weed_size_layer):
+        new_row = pd.DataFrame([[date, size, growth_rate, water_level, overlap, size_layer,boundary,weed_size_layer]], columns=self.df.columns)
         self.df = pd.concat([self.df, new_row], ignore_index=True)
 
 
 
+
 def main(input_data):
-    # Convert the input dates from YYYY-MM-DD to datetime format
-    start = datetime.strptime(str(input_data["start_date"]), '%Y-%m-%d')
-    end = datetime.strptime(str(input_data["end_date"]), '%Y-%m-%d')
-    
-    PARAMETERS = {
-        "length": input_data["length"],
-        "width": input_data["width"],
-        "row-distance": 30,
-        "column-distance": 30,
-        "initial-water-layer": input_data["initial_water_layer"],
-        "Plant": input_data["plant"],
-        "start_date": start,
-        "end_date": end,
-        "W_max": 30,
-        "H_max": 30,
-        "k": 0.001,
-        "n": 2,
-        "max_moves": 5,
-        "Yield": 0.8,
-        "size_per_plant": 7068.3,
-        "pattern": input_data["pattern"],
-    }
-    
-    sim = Simulation(PARAMETERS)
+    sim = Simulation(input_data)
     sim.planting()
     sim.run_simulation()
     
@@ -345,13 +439,60 @@ def main(input_data):
         "water": sim.df["Water"].tolist(),
         "overlap": sim.df["Overlap"].tolist(),
         "map": sim.df["Map"].tolist(),
+        "boundary": sim.df["Boundary"].tolist(),
+        "weed": sim.df["Weed"].tolist(),
     }
-
     return data
 
+lettuce = {
+        "name": "lettuce",
+        "W_max": 30,
+        "H_max": 30,
+        "k": 0.001,
+        "n": 2,
+        "max_moves": 5,
+        "Yield": 0.8,
+        "size_per_plant": 7068.3,
+        "row-distance": 30,
+        "column-distance": 30,
+    }
+cabbage = {
+        "name": "cabbage",
+        "W_max": 30,
+        "H_max": 30,
+        "k": 0.001,
+        "n": 2,
+        "max_moves": 5,
+        "Yield": 0.8,
+        "size_per_plant": 7068.3,
+        "row-distance": 30,
+        "column-distance": 30,
+    }
+spinach = {
+        "name": "spinach",
+        "W_max": 30,
+        "H_max": 30,
+        "k": 0.001,
+        "n": 2,
+        "max_moves": 5,
+        "Yield": 0.8,
+        "size_per_plant": 7068.3,
+        "row-distance": 30,
+        "column-distance": 30,
+    }
+weed = {
+        "name": "weed",
+        "W_max": 30,
+        "H_max": 30,
+        "k": 0.001,
+        "n": 2,
+        "max_moves": 5,
+        "Yield": 0.8,
+        "size_per_plant": 7068.3,
+        "row-distance": 30,
+        "column-distance": 30,
+    }
+        
 
-if __name__ == "__main__":
-    main()
-
-
-
+#if __name__ == "__main__":
+#    main()
