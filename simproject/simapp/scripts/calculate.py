@@ -15,8 +15,8 @@ class Crop:
         self.radius = 0  # Initial radius is 0
         self.parameters = parameters
         self.sim = sim
-        self.cells = np.zeros((self.parameters["W_max"] + 1, self.parameters["W_max"] + 1), dtype=bool)
-        self.boundary = np.zeros((self.parameters["W_max"] + 3, self.parameters["W_max"] + 3), dtype=bool)
+        self.cells = np.zeros((self.parameters["W_max"] + 1, self.parameters["W_max"] + 1), dtype=bool) 
+        self.boundary = np.zeros((self.parameters["W_max"] + 3, self.parameters["W_max"] + 3), dtype=bool) 
         self.moves = 0 # Number of moves
         self.overlap = 0 # Overlap with other plants
         self.previous_growth = 0 # Growth rate of the previous hour
@@ -25,29 +25,30 @@ class Crop:
         current_time = self.sim.current_date
         t_diff_hours = (current_time - datetime.strptime(self.sim.date, '%Y-%m-%d:%H:%M:%S')).total_seconds() / (3600.0)
         growth= self.parameters["k"] * (1 - self.overlap)* random.uniform(0.9, 1.1)
-
         growth_rate = self.parameters["H_max"] * self.parameters["n"] * (1 - np.exp(-growth * t_diff_hours))**(self.parameters["n"] - 1) * self.parameters["k"] * np.exp(-self.parameters["k"] * t_diff_hours)*self.sim.stepsize
-        
         self.previous_growth = growth_rate
         rounded_radius_before_growth = int(np.round(self.radius / 2))
         self.radius += growth_rate 
         rounded_radius = int(np.round(self.radius / 2))
-        #sim.water_layer[self.center] -= 0.1*growth_rate
+        self.sim.water_layer[self.center] -= 0.1*growth_rate
         # If the radius is the same as before, we can simply add the growth rate to the circular mask
         if rounded_radius == rounded_radius_before_growth:
             mask = self.generate_circular_mask(rounded_radius)
             crop_mask = np.zeros_like(size_layer, dtype=bool)
-            
+
+            # Check if the mask is within the boundaries of the field
             r_start =int(max(self.center[0] - rounded_radius, 0))
             r_end = int(min(self.center[0] + rounded_radius + 1, size_layer.shape[0]))
             c_start = int(max(self.center[1] - rounded_radius, 0))
             c_end = int(min(self.center[1] + rounded_radius + 1, size_layer.shape[1]))
-            
+
+            # Check if the mask is within the boundaries of the field
             mask_r_start = int(r_start - (self.center[0] - rounded_radius))
             mask_r_end = int(mask_r_start + (r_end - r_start))
             mask_c_start = int(c_start - (self.center[1] - rounded_radius))
             mask_c_end = int(mask_c_start + (c_end - c_start))
-            
+
+            # Add the mask to the crop mask
             crop_mask[r_start:r_end, c_start:c_end] = mask[mask_r_start:mask_r_end, mask_c_start:mask_c_end]
             np.add.at(size_layer, np.where(crop_mask), growth_rate)
             return
@@ -58,15 +59,18 @@ class Crop:
             # Check if the new position is within the boundaries of the field
             if 0 <= r_min < size_layer.shape[0] and 0 <= r_max <= size_layer.shape[0] and \
             0 <= c_min < size_layer.shape[1] and 0 <= c_max <= size_layer.shape[1]:
-
+                # Create a slice of the size_layer to check for overlap
+                #snpi the crop out of the size_layer to get just the crop
                 snipped_size_layer = size_layer[r_min:r_max, c_min:c_max]
                 mask = np.where(snipped_size_layer > 0, 1, 0)
-                
+                # Create a slice of the crop mask to check for overlap
                 snipped_cells = self.cells[
                     self.parameters["W_max"] // 2 - rounded_radius - 1:self.parameters["W_max"] // 2 + rounded_radius + 2,
                     self.parameters["W_max"] // 2 - rounded_radius - 1:self.parameters["W_max"] // 2 + rounded_radius + 2
                 ]
+                # Subtract the cells of the current crop to avoid self-interference
                 mask -= snipped_cells
+                # Add the mask to the crop mask
                 mask += self.boundary[
                     self.parameters["W_max"] // 2 - rounded_radius - 1:self.parameters["W_max"] // 2 + rounded_radius + 2,
                     self.parameters["W_max"] // 2 - rounded_radius - 1:self.parameters["W_max"] // 2 + rounded_radius + 2
@@ -90,39 +94,42 @@ class Crop:
                     if norm != 0:
                         direction_x /= norm
                         direction_y /= norm
-
+                    # Round the direction to the nearest integer
                     movement_x = round(int(-direction_x))
                     movement_y = round(int(-direction_y))
                     # Check if the movement is non-zero
                     if movement_x != 0 or movement_y != 0:
+                        # Calculate the new center position
                         new_center_x, new_center_y = center_x + movement_x, center_y + movement_y
 
                         # Check if the new position is within the boundaries of the field
                         if 0 <= new_center_x < size_layer.shape[0] and 0 <= new_center_y < size_layer.shape[1]:
-                            self.center = (new_center_x, new_center_y)
-                            pos_layer[center_x, center_y] = False
-                            pos_layer[new_center_x, new_center_y] = True
-                            obj_layer[center_x, center_y] = None
-                            obj_layer[new_center_x, new_center_y] = self
+                            self.center = (new_center_x, new_center_y)      #update the cenetr of the crop
+                            pos_layer[center_x, center_y] = False           #delete the old position of the crop in the pos_layer
+                            pos_layer[new_center_x, new_center_y] = True    #update the position of the crop in the pos_layer
+                            obj_layer[center_x, center_y] = None            #delete the old object of the crop in the obj_layer
+                            obj_layer[new_center_x, new_center_y] = self    #update the object of the crop in the obj_layer
                             self.moves += 1
 
                             # Update cells and boundary to avoid self-interference
                             self.update_cells_and_boundary()
-
+        # create a mask of the current plant
         mask = self.generate_circular_mask(rounded_radius)
+        #create an empty array of the size of the field to add the current plant on the right position to it
         crop_mask = np.zeros_like(size_layer, dtype=bool)
-        
+        # Check if the plant is within the boundaries of the field
         r_start = int(max(self.center[0] - rounded_radius, 0))
         r_end = int(min(self.center[0] + rounded_radius + 1, size_layer.shape[0]))
         c_start = int(max(self.center[1] - rounded_radius, 0))
         c_end = int(min(self.center[1] + rounded_radius + 1, size_layer.shape[1]))
-        
+        # Check if the mask is within the boundaries of the field
         mask_r_start = int(r_start - (self.center[0] - rounded_radius))
         mask_r_end = int(mask_r_start + (r_end - r_start))
         mask_c_start = int(c_start - (self.center[1] - rounded_radius))
         mask_c_end = int(mask_c_start + (c_end - c_start))
-        
+        #apply the mask to the crop mask array to get the current plant on the right position
         crop_mask[r_start:r_end, c_start:c_end] = mask[mask_r_start:mask_r_end, mask_c_start:mask_c_end]
+        #add the current growthrate to the new fields of the plant
         np.add.at(size_layer, np.where(crop_mask), growth_rate)
         # Update the cells and boundary
         if self.radius == 0:
@@ -136,19 +143,23 @@ class Crop:
         '''
         rounded_radius = int(np.round(self.radius / 2))
         mask = self.generate_circular_mask(rounded_radius)
-        
+        # Reset the cells and boundary
         r_start = max(self.parameters["W_max"] // 2 - mask.shape[0] // 2, 0)
         r_end = min(r_start + mask.shape[0], self.cells.shape[0])
         c_start = max(self.parameters["W_max"] // 2 - mask.shape[1] // 2, 0)
         c_end = min(c_start + mask.shape[1], self.cells.shape[1])
-
+        # Check if the mask is within the boundaries of the field
         mask_r_start = 0 if r_start >= 0 else -r_start
         mask_r_end = mask.shape[0] if r_end <= self.cells.shape[0] else mask.shape[0] - (r_end - self.cells.shape[0])
         mask_c_start = 0 if c_start >= 0 else -c_start
         mask_c_end = mask.shape[1] if c_end <= self.cells.shape[1] else mask.shape[1] - (c_end - self.cells.shape[1])
-        
+        # Add the mask to the cells
         self.cells[r_start:r_end, c_start:c_end] = mask[mask_r_start:mask_r_end, mask_c_start:mask_c_end]
-        self.boundary = convolve(self.cells, np.array([[0, 1, 0], [1, 0, 1], [0, 1, 0]]), mode='constant', cval=0.0) ^ self.cells
+        # Update the boundary using a convolution
+        self.boundary = convolve(self.cells, np.array([[0, 1, 0],
+                                                       [1, 0, 1],
+                                                       [0, 1, 0]]),
+                                                                     mode='constant', cval=0.0) ^ self.cells
 
 
        # Ensure r_min, r_max, c_min, c_max are within valid range
@@ -273,7 +284,6 @@ class Simulation:
         row_length = strip_parameters["rowLength"]
 
         half_row_dist = row_distance // 3
-        half_col_dist = column_distance // 3
         # Create grid indices for odd and even rows
         row_indices = np.arange(half_row_dist, row_length, row_distance)
         col_indices_odd = np.arange(start_col, end_col, column_distance)
@@ -339,7 +349,7 @@ class Simulation:
             weed_x = np.random.randint(0, self.crop_size_layer.shape[0], 1)
             weed_y = np.random.randint(0, self.crop_size_layer.shape[1], 1)
             size_at_spot = self.crop_size_layer[weed_x, weed_y]
-            random = np.random.uniform(0, 1+size_at_spot, 1)
+            random = np.random.uniform(0, (24+size_at_spot)/self.stepsize, 1)
             if random <=0.2:
                 self.weeds_pos_layer[weed_x, weed_y] = True
                 self.weeds_obj_layer[weed_x, weed_y] = Crop("weed", (weed_x, weed_y),weed, self)
@@ -461,26 +471,26 @@ lettuce = {
     }
 cabbage = {
         "name": "cabbage",
-        "W_max": 30,
-        "H_max": 30,
-        "k": 0.001,
+        "W_max": 60,
+        "H_max": 40,
+        "k": 0.0005,
         "n": 2,
         "max_moves": 5,
-        "Yield": 0.8,
-        "size_per_plant": 7068.3,
-        "row-distance": 30,
-        "column-distance": 30,
+        "Yield": 1.6,
+        "size_per_plant": 9000.3,
+        "row-distance": 60,
+        "column-distance": 40,
     }
 spinach = {
         "name": "spinach",
-        "W_max": 30,
+        "W_max": 20,
         "H_max": 30,
-        "k": 0.001,
+        "k": 0.002,
         "n": 2,
         "max_moves": 5,
-        "Yield": 0.8,
-        "size_per_plant": 7068.3,
-        "row-distance": 30,
+        "Yield": 0.4,
+        "size_per_plant": 5068.3,
+        "row-distance": 20,
         "column-distance": 30,
     }
 weed = {

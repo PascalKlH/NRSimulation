@@ -2,9 +2,55 @@ document.addEventListener('DOMContentLoaded', function () {
     const addRowButton = document.getElementById('addRowButton');
     const runSimulationButton = document.getElementById('runSimulation');
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    
     let rowCount = 0; // Assuming rowCount is declared globally
+    const plantTypeSelect = document.getElementById('plantTypeSelect');
+    const plantDescriptionContainer = document.getElementById('plantDescription');
 
+    // Define the description HTML for each plant type
+    const descriptions = {
+        'lettuce': `
+            <strong>Max Height:</strong> 30cm<br>
+            <strong>Max Width:</strong> 30cm<br>
+            <strong>Growth Rate:</strong> ca. 1cm/day<br>
+            <strong>Recomended Distance Between Plants:</strong> 20-30cm<br>
+            <strong>Yield per Plant:</strong> ca. 200-300g
+        `,
+        'cabbage': `
+            <strong>Max Height:</strong> 30cm<br>
+            <strong>Max Width:</strong> 60cm<br>
+            <strong>Growth Rate:</strong> ca. 0.5cm/day<br>
+            <strong>Recommended Distance Between Plants:</strong> 40-50cm<br>
+            <strong>Yield per Plant:</strong> ca. 1-2kg<br>
+            <strong>Additional Info:</strong> Cabbage can be eaten raw or cooked and is known for its high vitamin C content.
+               `,
+        'spinach': `
+            <strong>Max Height:</strong> 30cm<br>
+            <strong>Max Width:</strong>20 cm<br>
+            <strong>Growth Rate:</strong> ca. 1.5cm/day<br>
+            <strong>Recommended Distance Between Plants:</strong> 10-20cm<br>
+            <strong>Yield per Plant:</strong> ca. 100-150g<br>
+            <strong>Additional Info:</strong> Spinach is rich in iron and vitamins A and C, and is commonly used in salads and cooking.
+        `        
+    };
+
+    plantTypeSelect.addEventListener('change', function() {
+        const selectedValue = this.value;
+        const description = descriptions[selectedValue] || '';
+
+        // Clear any existing content
+        plantDescriptionContainer.innerHTML = '';
+
+        if (description) {
+            // Create a new <div> to hold the description
+            const descriptionDiv = document.createElement('div');
+            descriptionDiv.className = 'plant-description';
+            descriptionDiv.innerHTML = description;
+
+            // Append the new <div> to the plantDescription container
+            plantDescriptionContainer.appendChild(descriptionDiv);
+        }
+    });
+    
     // Event listener for adding a new row
     addRowButton.addEventListener('click', function () {
         rowCount++;
@@ -88,7 +134,6 @@ document.addEventListener('DOMContentLoaded', function () {
     
 
     runSimulationButton.addEventListener('click', function (event) {
-        alert("Simulation is running, please wait for the results to load");
         event.preventDefault();  // Prevent the default form submission
 
         const rows = document.querySelectorAll('.row-container');
@@ -107,6 +152,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 rowSpacing: parseFloat(rowSpacing)
             });
         });
+        let rowArray = [];  // Initialize the array    
+        const rowLength = parseInt(document.getElementById('rowLength').value);  // Assuming this is defined in your HTML
+    
+        rowData.forEach((row, index) => {
+            for (let i = 0; i < row.stripWidth; i++) {
+                rowArray.push(Array(rowLength).fill(index));
+            }
+        });
+        rowArray = rowArray[0].map((_,colindex)=>rowArray.map(row=>row[colindex]));
+    
         const requestData = {
 
             //convert the values to integers
@@ -131,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return response.json();
         })
         .then(result => {
-            displayResults(result);
+            displayResults(result, rowArray);
             // Handle the response data here
         })
         .catch(error => {
@@ -140,8 +195,7 @@ document.addEventListener('DOMContentLoaded', function () {
         
     });
 
-    function displayResults(data) {
-        console.log(data);
+    function displayResults(data, rowArray2D) {
         const dates = data.time || [];
         const yields = data.yield || [];
         const growths = data.growth || [];
@@ -150,6 +204,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const heatmapData = data.map || [];
         const boundary = data.boundary || [];
         const weed = data.weed || []; 
+        console.log(boundary);
         
 
         // Create traces for each data series
@@ -294,11 +349,23 @@ document.addEventListener('DOMContentLoaded', function () {
             sliderValueDisplay.textContent = sliderValue;
             displayHeatmap(sliderValue);
         });
-
+        const showStrips = document.getElementById('showStrips')
+        const selectedOption = document.getElementById('heatmapOption');
+        showStrips.addEventListener('change', function() {
+            displayHeatmap(slider.value);
+        }
+        );
+        selectedOption.addEventListener('change', function() {
+            displayHeatmap(slider.value);
+        }
+        );
         // Function to display the corresponding Heatmap data
         function displayHeatmap(index) {
             const mapData = mapArray[index];  // Access the data for the heatmap at the given index
             const weedData = weedArray[index];
+            const showStrips = document.getElementById('showStrips').checked;
+            const selectedOption = document.getElementById('heatmapOption').value;
+
         
             if (mapData) {
                 // Heatmap data trace
@@ -333,6 +400,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     },
                     opacity: 0.5  // Adjust opacity so that both layers are visible
                 };
+                const stripTrace = {
+                    z: rowArray2D,
+                    type: 'heatmap',
+                    colorscale: [
+                        [0, 'rgb(200,200,200)'],
+                        [1, 'rgb(150,150,150)']
+                    ],
+                    showscale: false,
+                    opacity: 0.3
+                };
                 const layout = {
                     title: `Heatmap on ${dates[index]}`,
                     xaxis: {
@@ -345,16 +422,21 @@ document.addEventListener('DOMContentLoaded', function () {
                     },
                     margin: { t: 40, r: 20, b: 40, l: 50 },
                 };
-                const selectedOption = document.getElementById('heatmapOption').value;
+                
+                let traces = [];
                 if (selectedOption === 'plants') {
-                    Plotly.newPlot('heatmap', [heatmapTrace], layout);
+                    traces.push(heatmapTrace);
+                } else if (selectedOption === 'weeds') {
+                    traces.push(weedTrace);
+                } else if (selectedOption === 'plantsweeds') {
+                    traces.push(heatmapTrace, weedTrace);
                 }
-                else if (selectedOption === 'weeds') {
-                    Plotly.newPlot('heatmap', [weedTrace], layout);
+
+                if (showStrips) {
+                    traces.push(stripTrace);  // Add the strip trace if the checkbox is checked
                 }
-                else if (selectedOption === 'plantsweeds') {
-                    Plotly.newPlot('heatmap', [heatmapTrace, weedTrace], layout);
-                }
+
+                Plotly.newPlot('heatmap', traces, layout);
             } else {
                 console.error(`No data found for index ${index}.`);
             }

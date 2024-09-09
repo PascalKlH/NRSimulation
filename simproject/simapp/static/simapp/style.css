@@ -1,22 +1,13 @@
 /* Consistent size and center alignment for all plot containers */
 .plot-container {
-<<<<<<< HEAD
     width: 1000px;
     height: 1000px;
-=======
-    width: 800px;
-    height: 500px;
->>>>>>> a8b6987e74094664ade0de6a902412d782cfb234
     margin: 0 auto; /* Center horizontally */
 }
 
 /* Align the slider with the plots */
 #dateSlider {
-<<<<<<< HEAD
     width: 1000px;
-=======
-    width: 800px;
->>>>>>> a8b6987e74094664ade0de6a902412d782cfb234
     margin: 20px auto; /* Center horizontally */
     display: block;
 }
@@ -57,4 +48,20 @@
 
 .row-controls .remove-btn {
     flex: none; /* Entfernt die Flexibilität, damit der Button seine eigene Größe behält */
+}
+.row-container {
+    position: relative; /* Ensure the tooltip is positioned relative to the row container */
+}
+
+.tooltip {
+    display: none;
+    position: absolute;
+    background-color: #333;
+    color: #fff;
+    padding: 5px;
+    border-radius: 5px;
+    font-size: 12px;
+    z-index: 1000;
+    white-space: nowrap;
+    max-width: 200px; /* Optional: to ensure tooltip doesn’t get too wide */
 }

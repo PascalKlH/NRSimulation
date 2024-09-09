@@ -50,7 +50,7 @@
         <div class="row justify-content-center mt-4">
             <div class="col-md-8">
                 <label for="stepSize" class="form-label">Step Size</label>
-                <input type="number" id="stepSize" class="form-control" value="1" min="1" max="24">
+                <input type="number" id="stepSize" class="form-control" value="24" min="1" max="24">
             </div>
         </div>
 
@@ -65,6 +65,22 @@
                 </select>
             </div>
         </div>
+        <!-- Expandable Field for Plant Types -->
+        <div class="row justify-content-center mt-4">
+            <div class="col-md-8">
+                <label for="plantTypeSelect" class="form-label">Plant Parameters</label>
+                <select id="plantTypeSelect" class="form-select">
+                    <option value="">--Select a Plant--</option>
+                    <option value="lettuce">Lettuce</option>
+                    <option value="cabbage">Cabbage</option>
+                    <option value="spinach">Spinach</option>
+                </select>
+                <div id="plantDescription" class="mt-3"></div>
+            </div>
+        </div>
+
+
+
 
         <!-- Dynamic Rows -->
         <div class="row justify-content-center mt-4">
@@ -134,6 +150,8 @@
                     <option value="weeds">Weeds</option>
                     <option value="plantsweeds">Plants and Weeds</option>
                 </select>
+                <label for="showStrips" class="form-check-label">Show Strips</label>
+                <input type="checkbox" id="showStrips" class="form-check-input">
             </div>
         </div>
     </div>
