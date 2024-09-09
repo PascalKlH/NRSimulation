@@ -353,6 +353,9 @@ class Simulation:
         '''
         Grow the plants in parallel using multiple threads or processes to speed up the simulation
         '''
+        #rainfall = weather_data[0][7]
+        #self.water_layer += rainfall
+
         with self.lock:
             # Extract crops that are present in the plants_layer
             crops = self.crops_obj_layer[self.crops_pos_layer]
