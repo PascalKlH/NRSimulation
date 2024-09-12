@@ -450,7 +450,6 @@ def main(input_data):
     sim = Simulation(input_data)
     sim.planting()
     sim.run_simulation()
-    
     # Convert the DataFrame columns to lists for serialization
     data = {
         "time": sim.df["Date"].tolist(),
