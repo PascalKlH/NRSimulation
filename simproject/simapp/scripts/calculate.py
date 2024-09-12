@@ -15,7 +15,7 @@ class Crop:
         self.radius = 0  # Initial radius is 0
         self.parameters = parameters
         self.sim = sim
-        self.cells = np.zeros((self.parameters["W_max"] + 1, self.parameters["W_max"] + 1), dtype=bool) 
+        self.cells = np.zeros((self.parameters["W_max"] + self.parameters["max_moves"], self.parameters["W_max"] + self.parameters["max_moves"]), dtype=bool) 
         self.boundary = np.zeros((self.parameters["W_max"] + 3, self.parameters["W_max"] + 3), dtype=bool) 
         self.moves = 0 # Number of moves
         self.overlap = 0 # Overlap with other plants
@@ -54,6 +54,7 @@ class Crop:
             return
         #move the plant if the max is not reached
         if self.moves < self.parameters["max_moves"]:
+            
             r_min, r_max = int(self.center[0] - rounded_radius - 1), int(self.center[0] + rounded_radius + 2)
             c_min, c_max = int(self.center[1] - rounded_radius - 1), int(self.center[1] + rounded_radius + 2)
             # Check if the new position is within the boundaries of the field
@@ -133,6 +134,7 @@ class Crop:
         np.add.at(size_layer, np.where(crop_mask), growth_rate)
         # Update the cells and boundary
         if self.radius == 0:
+            #set the inital cell of the plant to 1
             self.cells[self.parameters["W_max"] // 2, self.parameters["W_max"] // 2] = 1
         else:
             self.update_cells_and_boundary()
@@ -140,7 +142,10 @@ class Crop:
     def update_cells_and_boundary(self):
         '''
         Update the cells and boundary of the crop based on the current center and radius
+
         '''
+        #print("before")
+        #print(self.cells)
         rounded_radius = int(np.round(self.radius / 2))
         mask = self.generate_circular_mask(rounded_radius)
         # Reset the cells and boundary
@@ -180,6 +185,8 @@ class Crop:
 
         # Add the new boundary slice to the existing boundary_layer
         self.sim.boundary_layer[r_min:r_max, c_min:c_max] += new_boundary_slice.astype(int)
+        #print("after")
+        #print(self.cells)
 
 
 
