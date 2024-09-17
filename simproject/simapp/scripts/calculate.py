@@ -461,7 +461,10 @@ def main(input_data):
         "boundary": sim.df["Boundary"].tolist(),
         "weed": sim.df["Weed"].tolist(),
     }
-    return data
+    #save the last instance of the simulation in the db
+    index_of_last_instance = len(sim.df)-1
+    last_instance = sim.df.iloc[index_of_last_instance]
+    return data, last_instance
 
 lettuce = {
         "name": "lettuce",

@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation Plot</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'simapp/style.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="{% url 'index' %}">Home</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'index' %}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'plot_simulation' %}">Plot Simulation</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <canvas id="simulationChart"></canvas>
+    <script>
+        // Get data from Django context
+        const data = {{ data|safe }};
+        
+        // Extract data for plotting
+        const lengths = data.map(record => record.rowLength);
+        const yields = data.map(record => record.yield);
+
+        // Create chart
+        const ctx = document.getElementById('simulationChart').getContext('2d');
+        const myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: lengths,
+                datasets: [{
+                    label: 'Yield vs Length',
+                    data: yields,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Row Length'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Yield'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
