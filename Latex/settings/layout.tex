@@ -1,0 +1,51 @@
+% geometry
+\usepackage{geometry}
+\geometry{left=25mm, right=25mm, top=25mm, bottom=30mm}
+
+\usepackage[automark]{scrlayer-scrpage}
+\pagestyle{plain}
+
+% footnote gap
+\addtolength{\skip\footins}{1ex}
+\addtolength{\footnotesep}{0.5ex}
+
+% prevent footnote page break
+\interfootnotelinepenalty=10000
+
+% line spacing
+\usepackage[onehalfspacing]{setspace}
+
+% text does not have to go to the end of a page
+\raggedbottom
+
+% space before and after chapter headings
+\RedeclareSectionCommand[beforeskip=0pt,afterskip=.6cm,font=\fontsize{18}{20}\selectfont]{chapter}
+%\RedeclareSectionCommand[beforeskip=10pt,afterskip=.3cm,font=\fontsize{18}{25}\selectfont]{section}
+%\RedeclareSectionCommand[beforeskip=10pt,afterskip=.3cm,font=\fontsize{16}{25}\selectfont]{subsection}
+%\RedeclareSectionCommand[beforeskip=0pt,afterskip=.3cm,font=\fontsize{14}{25}\selectfont]{subsubsection}
+
+\usepackage{mwe}
+
+% chapter style
+\renewcommand*{\chapterformat}{%
+  \thechapter\enskip
+  \textcolor{gray!70}{\rule[-\dp\strutbox]{1pt}{\baselineskip}}\enskip
+}
+\setkomafont{disposition}{\normalcolor\bfseries}
+
+% adjust paragraphs
+%\addtokomafont{paragraph}{\itshape}
+%\setkomafont{subsubsection}{\large}
+%\setkomafont{paragraph}{\normalsize\itshape}
+\setkomafont{paragraph}{\normalsize}
+
+% layout of the paragraphs
+% paragraphs look like the subsubsections
+\RedeclareSectionCommands[
+    beforeskip=-3.25ex plus -1ex minus -0.2ex,
+    afterskip=1sp, % smallest possible positive value
+]{paragraph,subparagraph}
+
+% Bold caption labels
+\setkomafont{captionlabel}{\normalsize\bfseries} 
+% \usepackage[font=sf]{caption} % Captions without serifs
