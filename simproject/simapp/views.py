@@ -42,10 +42,16 @@ def run_simulation(request):
 
 
 
+import pandas as pd
+from django.shortcuts import render
+from .models import DataModelInput, DataModelOutput
+
 def plot_simulation(request):
     # Fetch data
     inputs = DataModelInput.objects.all()
     outputs = DataModelOutput.objects.all()
+    #print the names of the fields in the outputs
+    print(outputs[0].__dict__.keys())
     
     # Prepare data for plotting
     input_data = []
@@ -53,22 +59,32 @@ def plot_simulation(request):
     
     for input_record, output_record in zip(inputs, outputs):
         input_data.append({
-            'rowLength': input_record.rowLength
+            'rowLength': input_record.rowLength,
+            'numIterations': input_record.numIterations,
+            'width': input_record.rows[0]['stripWidth'],  # Adjust for nested data
+            'rowSpacing': input_record.rows[0]['rowSpacing'],
+            # Add other fields you want to be available for the X axis
         })
         output_data.append({
-            'yield': output_record.yield_value
+            'yield_value': output_record.yield_value,  # Change from `yield`
+            'growth': output_record.growth,
+            'water': output_record.water,
+            'overlap': output_record.overlap,
+            'plants': output_record.map,
+            'weeds': output_record.weed,
+            # Add other fields for the Y axis
         })
     
     # Convert to DataFrame for easier manipulation
     df_inputs = pd.DataFrame(input_data)
     df_outputs = pd.DataFrame(output_data)
     
-    # Merge DataFrames on index or other key if necessary
+    # Merge DataFrames on index
     df = pd.concat([df_inputs, df_outputs], axis=1)
     
     # Prepare data for template
     context = {
-        'data': df.to_dict(orient='records')
+        'data': df.to_dict(orient='records')  # Convert DataFrame to list of dictionaries
     }
     
     return render(request, 'simapp/plot_simulation.html', context)
