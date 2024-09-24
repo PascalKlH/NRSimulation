@@ -70,17 +70,43 @@ Choose the planting configuration (e.g., plant types, strip widths) and run the 
 View the results, which are stored in the database and can be visualized.
 
 
-Project Structure
-   ```csharp
-yourproject/
+## Project Structure
+
+```csharp
+NRSsimulation/
 │
-├── manage.py              # Django management script
-├── requirements.txt       # Python package dependencies
-├── yourapp/               # Main application folder
-│   ├── migrations/        # Database migrations
-│   ├── models.py          # Database models
-│   ├── views.py           # Application views
-│   ├── templates/         # HTML templates
-│   └── static/            # Static files (CSS, JS)
+├── simproject/
+│   ├── simapp/
+│   │   ├── __pycache__/
+│   │   ├── migrations/         # Django migrations folder
+│   │   ├── scripts/
+│   │   │   ├── __pycache__/
+│   │   │   ├── calculate.py     # Calculation scripts of the simulation
+│   │   │   └── transformed_weather_data.csv  # Weather data of simulation
+│   │   ├── static/
+│   │   │   ├── images/          # Images folder of favicon or other assets
+│   │   │   ├── simapp/          # Static files of simapp like JS, CSS
+│   │   │   │   ├── script.js    # JavaScript file
+│   │   │   │   └── style.css    # Stylesheet file
+│   │   ├── templates/
+│   │   │   └── simapp/          # HTML templates
+│   │   │       ├── index.html
+│   │   │       └── plot_simulation.html
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── forms.py
+│   │   ├── models.py
+│   │   ├── tests.py
+│   │   ├── urls.py
+│   │   └── views.py
+│   ├── __pycache__/
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
 │
-└── db.sqlite3             # SQLite database file
+├── db.sqlite3                 # SQLite database file
+├── manage.py                  # Django management script
+└── README.md                  # Project README file
