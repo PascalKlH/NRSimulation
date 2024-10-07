@@ -1,0 +1,95 @@
+/* Consistent size and center alignment for all plot containers */
+.plot-container {
+    width: 1000px;
+    height: 1000px;
+    margin: 0 auto; /* Center horizontally */
+}
+
+/* Align the slider with the plots */
+#dateSlider {
+    width: 1000px;
+    margin: 20px auto; /* Center horizontally */
+    display: block;
+}
+
+/* Custom styles for better visual appearance */
+.text-center {
+    text-align: center;
+}
+.row-container {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+.row-controls input {
+    width: 100px;
+    margin-right: 10px;
+}
+.row-controls select {
+    width: 150px;
+    margin-right: 10px;
+}
+.remove-btn {
+    margin-top: 10px;
+}
+.row-controls {
+    display: flex;
+    flex-wrap: wrap; /* Optional: Wenn die Zeile zu lang ist, wird sie umgebrochen */
+    gap: 10px; /* Abstand zwischen den Elementen */
+    align-items: center; /* Zentriert die Elemente vertikal */
+}
+
+.row-controls select,
+.row-controls input {
+    flex: 1; /* Alle Elemente teilen den verfügbaren Platz gleichmäßig auf */
+    min-width: 120px; /* Mindestbreite der Felder */
+}
+
+.row-controls .remove-btn {
+    flex: none; /* Entfernt die Flexibilität, damit der Button seine eigene Größe behält */
+}
+.row-container {
+    position: relative; /* Ensure the tooltip is positioned relative to the row container */
+}
+
+.tooltip {
+    display: none;
+    position: absolute;
+    background-color: #333;
+    color: #fff;
+    padding: 5px;
+    border-radius: 5px;
+    font-size: 12px;
+    z-index: 1000;
+    white-space: nowrap;
+    max-width: 200px; /* Optional: to ensure tooltip doesn’t get too wide */
+}
+/* Style for the carousel control buttons */
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    background-color: black !important; /* Change the color to make it stand out */
+    width: 50px; /* Increase the width */
+    height: 50px; /* Increase the height */
+}
+
+.carousel-control-prev,
+.carousel-control-next {
+    background-color: rgba(0, 0, 0, 0.5); /* Add a translucent background to the buttons */
+    border-radius: 50%; /* Make the buttons round */
+    width: 60px; /* Increase button size */
+    height: 60px; /* Increase button size */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.carousel-control-prev-icon::before,
+.carousel-control-next-icon::before {
+    font-size: 2rem; /* Increase the size of the icon */
+}
+
+.carousel-control-prev:hover,
+.carousel-control-next:hover {
+    background-color: rgba(0, 0, 0, 0.7); /* Darken the button on hover */
+}

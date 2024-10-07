@@ -1,0 +1,176 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="csrf-token" content="{{ csrf_token }}">
+        <title>Simulation Data Visualization</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <link rel="stylesheet" href="{% static 'simapp/style.css' %}">
+        <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
+    </head>
+    <body>
+        <div class="container">
+            <h1 class="my-4 text-center">Grid-based Polycultural Simulation</h1>
+            <div class="accordion" id="accordionPanelsStayOpenExample">
+                <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseOne" aria-expanded="true" aria-controls="panelsStayOpen-collapseOne">
+                    Accordion Item #1
+                    </button>
+                </h2>
+                <div id="panelsStayOpen-collapseOne" class="accordion-collapse collapse show">
+                    <div class="accordion-body">
+                    <div class="row">
+                        <!--inputfield to input the name of the plotting simulation.-->
+                        
+                        <!-- Run Simulation Button -->
+            <div class="row justify-content-center mt-4">
+                <div class="col-md-8">
+                    <button id="plotresults" class="btn btn-primary w-100">Plot Simulation</button>
+                </div>
+            </div>
+                    </div>
+                </div>
+                </div>
+                <div class="accordion" id="accordionPanelsStayOpenExample">
+                    <!-- Accordion Item 2 -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseTwo" aria-expanded="false" aria-controls="panelsStayOpen-collapseTwo">
+                                Simulation Results #2
+                            </button>
+                        </h2>
+                        <div id="panelsStayOpen-collapseTwo" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                <!-- Carousel for Iteration Results (First Plot Carousel) -->
+                                <div id="carouselExampleCaptions1" class="carousel slide" data-bs-ride="carousel">
+                                    <div class="carousel-indicators">
+                                        <!-- Indicators will be generated dynamically -->
+                                    </div>
+                                    <div class="carousel-inner">
+                                        <!-- Carousel items (plots) will be generated dynamically -->
+                                    </div>
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleCaptions1" data-bs-slide="prev">
+                                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Previous</span>
+                                    </button>
+                                    <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleCaptions1" data-bs-slide="next">
+                                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Next</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <!-- Accordion Item 3 -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseThree" aria-expanded="false" aria-controls="panelsStayOpen-collapseThree">
+                                Simulation Results #3
+                            </button>
+                        </h2>
+                        <div id="panelsStayOpen-collapseThree" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                <!-- Carousel for Second Plot -->
+                                <div id="carouselExampleCaptions2" class="carousel slide" data-bs-ride="carousel">
+                                    <div class="carousel-indicators">
+                                        <!-- Indicators will be generated dynamically -->
+                                    </div>
+                                    <div class="carousel-inner">
+                                        <!-- Carousel items will be generated dynamically -->
+                                    </div>
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleCaptions2" data-bs-slide="prev">
+                                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Previous</span>
+                                    </button>
+                                    <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleCaptions2" data-bs-slide="next">
+                                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Next</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <!-- Accordion Item 4 -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseFour" aria-expanded="false" aria-controls="panelsStayOpen-collapseFour">
+                                Simulation Results #4
+                            </button>
+                        </h2>
+                        <div id="panelsStayOpen-collapseFour" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                <!-- Carousel for Third Plot (Heatmap) -->
+                                <div id="carouselExampleCaptions3" class="carousel slide" data-bs-ride="carousel">
+                                    <div class="carousel-indicators">
+                                        <!-- Indicators will be generated dynamically -->
+                                    </div>
+                                    <div class="carousel-inner">
+                                        <!-- Carousel items will be generated dynamically -->
+                                    </div>
+                                    <!-- Heatmap Controls -->
+                                    <div class="col-12 text-center mt-3">
+                                        <label for="heatmapOption" class="form-label">Select Heatmap View:</label>
+                                        <select id="heatmapOption" class="form-select w-50 mx-auto">
+                                            <option value="plants">Plants</option>
+                                            <option value="weeds">Weeds</option>
+                                            <option value="plantsweeds">Plants and Weeds</option>
+                                        </select>
+                                        <label for="showStrips" class="form-check-label">Show Strips</label>
+                                        <input type="checkbox" id="showStrips" class="form-check-input">
+                                    </div>
+                                    <div class="col-md-8 mx-auto text-center mt-3">
+                                        <label for="dateSlider" class="form-label">Select Date:</label>
+                                        <input type="range" id="dateSlider" min="0" max="0" value="0" class="form-range">
+                                        <span id="sliderValue">0</span>
+                                    </div>
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleCaptions3" data-bs-slide="prev">
+                                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Previous</span>
+                                    </button>
+                                    <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleCaptions3" data-bs-slide="next">
+                                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">Next</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                
+                   <!-- Accordion Item 5 - Final Results Plot (Comparison) -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#panelsStayOpen-collapseFive" aria-expanded="false" aria-controls="panelsStayOpen-collapseFive">
+                                Final Results Plot (Comparison)
+                            </button>
+                        </h2>
+                        <div id="panelsStayOpen-collapseFive" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                <!-- Dropdown for Plot Selection (Y-Axis) -->
+                                <div class="row mb-3">
+                                    <label for="y-axis-select" class="form-label">Select Y-Axis (Value to Compare):</label>
+                                    <select id="y-axis-select" class="form-select">
+                                        <option value="growth">Growth</option>
+                                        <option value="yield">Yield</option>
+                                        <option value="water">Water</option>
+                                        <option value="overlap">Overlap</option>
+                                    </select>
+                                </div>
+                                <!-- Plot Container for Comparison -->
+                                <div id="comparisonPlot" class="mt-4"></div> <!-- This is where the comparison plot will appear -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                
+        
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="{% static 'simapp/plot_simulation.js' %}"></script>
+    </body>
+</html>
