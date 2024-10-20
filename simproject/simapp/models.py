@@ -2,6 +2,7 @@
 from django.db import models
 
 
+
 class DataModelInput(models.Model):
     """
     Model to store input parameters for the simulation.
@@ -14,11 +15,21 @@ class DataModelInput(models.Model):
         The time step size for the simulation.
     rowLength : IntegerField
         The length of each row in the simulation.
+    testingMode : BooleanField
+        A flag indicating whether the simulation is in testing mode.
+    testingValue : FloatField
+        The value used for testing the simulation.
+    testingKey : CharField
+        The key used for testing the simulation.
     """
 
     startDate = models.DateField()
     stepSize = models.IntegerField()
     rowLength = models.IntegerField()
+    testingMode = models.BooleanField(default=False, null=True)
+    testingValue = models.FloatField(default=None, null=True)
+    testingKey = models.CharField(max_length=100,default=None, null=True)
+    simName = models.CharField(max_length=100)
 
     def set_data(self, data):
         """
@@ -32,6 +43,17 @@ class DataModelInput(models.Model):
         self.startDate = data.get('startDate')
         self.stepSize = data.get('stepSize')
         self.rowLength = data.get('rowLength')
+        self.testingMode = data.get('testingMode')
+        testing_data = data.get('testingData', {})
+       
+        if testing_data and self.testingMode:
+            self.testingKey, self.testingValue = next(iter(testing_data.items()), (None, None))
+            if isinstance(self.testingValue,dict):
+                self.testingValue = -99
+        else:
+            self.testingKey = None
+            self.testingValue = None
+        self.simName = data.get('simName')
 
     def get_data(self):
         """
@@ -97,36 +119,6 @@ class RowDetail(models.Model):
         }
 
 
-class Simulation(models.Model):
-    """
-    Model to represent a simulation run.
-
-    Attributes
-    ----------
-    input_data : ForeignKey
-        A foreign key linking to the DataModelInput used in the simulation.
-    testing_mode : BooleanField
-        A flag to indicate if testing mode was enabled.
-    """
-
-    input = models.ForeignKey(DataModelInput, on_delete=models.CASCADE)  # Adjust according to your design
-    tag = models.CharField(max_length=50)
-    name = models.CharField(max_length=50)
-
-
-    def set_data(self, data):
-        """
-        Set simulation data.
-        """
-        self.testing_mode = data.get('testing_mode', False)
-        self.input_data = data.get('input_data', None)
-    
-    def get_data(self):
-        return {
-            'input_data': self.input.get_data(),
-            'testing_mode': self.testing_mode,
-            'name': self.name,
-        }
 
 
 class SimulationIteration(models.Model):
@@ -143,9 +135,9 @@ class SimulationIteration(models.Model):
         The value of the parameter being changed in this iteration (if applicable).
     """
 
-    simulation = models.ForeignKey(Simulation, on_delete=models.CASCADE, related_name='iterations')
-    iteration_index = models.IntegerField()
-    param_value = models.FloatField()
+    input = models.ForeignKey(DataModelInput, on_delete=models.CASCADE, related_name='iterations')
+    iteration_index = models.IntegerField(default=0)
+    param_value = models.FloatField(default=None, null=True)
 
     def set_data(self, data):
         """
@@ -153,6 +145,7 @@ class SimulationIteration(models.Model):
         """
         self.iteration_index = data.get('iteration_index', 0)
         self.param_value = data.get('param_value', 0.0)
+        
 
     def get_data(self):
         return {
@@ -183,12 +176,14 @@ class DataModelOutput(models.Model):
     """
 
     iteration = models.ForeignKey(SimulationIteration, on_delete=models.CASCADE, related_name='outputs')
-    yield_value = models.FloatField()
+    date = models.CharField(max_length=100)
+    yield_value = models.FloatField(null=True)
     growth = models.FloatField()
     water = models.FloatField()
     overlap = models.IntegerField()
     map = models.JSONField()
-
+    weed = models.JSONField()
+    time_needed = models.FloatField()
     def set_data(self, data):
         """
         Set the output data for this iteration.
@@ -200,6 +195,8 @@ class DataModelOutput(models.Model):
         self.overlap = data.get('overlap')
         self.map = data.get('map')
         self.weed = data.get('weed')
+        self.time_needed = data.get('time_needed')
+
         
 
     def get_data(self):
@@ -213,7 +210,8 @@ class DataModelOutput(models.Model):
             'water': self.water,
             'overlap': self.overlap,
             'map': self.map,
-            'weed': self.weed
+            'weed': self.weed,
+            'time_needed': self.time_needed,
         }
 
 class Plant(models.Model):
@@ -253,6 +251,41 @@ class Plant(models.Model):
     size_per_plant = models.FloatField()  # Size per plant
     row_distance = models.FloatField()  # Distance between rows
     column_distance = models.FloatField()  # Distance between columns
+    test=models.TextField(max_length=100)
 
     def __str__(self):
         return self.name
+class Weather(models.Model):
+
+    date = models.CharField(max_length=100)
+    temperature = models.FloatField()
+    rain = models.FloatField()
+
+
+    def set_data(self, data):
+        """
+        Set the test data for the simulation model.
+
+        Parameters
+        ----------
+        data : dict
+            A dictionary containing the test parameters.
+        """
+        self.temperature = data.get('temperature')
+        self.rain = data.get('rain')
+        self.date = data.get('date')
+
+    def get_data(self):
+        """
+        Get the test data from the simulation model.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the test parameters.
+        """
+        return {
+            'temperature': self.temperature,
+            'rain': self.rain,
+            'date': self.date,
+        }

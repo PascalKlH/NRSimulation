@@ -9,35 +9,9 @@ document.addEventListener('DOMContentLoaded', function () {
     let currentlyCheckedBox = null;
     let singleRowAdded = false;
     
-    document.getElementById('plotSimulation').addEventListener('click', function() {
-        const simulationName = document.getElementById('simulationName').value;
-        if (!simulationName) {
-            alert('Please enter a simulation name.');
-            return;
-        }
+
     
-        // Assuming you have a Django URL setup to handle this post request
-        fetch('/get_simulation_results/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken  // Ensure csrfToken is defined in your script
-            },
-            body: JSON.stringify({simulation_name: simulationName})
-        })
-        .then(response => {
-            console.log(response);
-            if (!response.ok) throw new Error('Network response was not ok.');
-            return response.json();
-        })
-        .then(data => {
-            console.log(data);  // Process and display your data as needed
-            // You may want to call a function here to update your page with the simulation results
-        })
-        .catch(error => {
-            console.error('There was a problem with your fetch operation:', error);
-        });
-    });
+
 
     // Toggle testing mode
     testingModeCheckbox.addEventListener('change', function () {
@@ -143,10 +117,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Plant descriptions (same as before)
     const descriptions = {
+    
         'lettuce': `<strong>Max Height:</strong> 30cm<br><strong>Max Width:</strong> 30cm<br><strong>Growth Rate:</strong> ca. 1cm/day<br><strong>Recommended Distance Between Plants:</strong> 20-30cm<br><strong>Yield per Plant:</strong> ca. 200-300g`,
         'cabbage': `<strong>Max Height:</strong> 30cm<br><strong>Max Width:</strong> 60cm<br><strong>Growth Rate:</strong> ca. 0.5cm/day<br><strong>Recommended Distance Between Plants:</strong> 40-50cm<br><strong>Yield per Plant:</strong> ca. 1-2kg<br><strong>Additional Info:</strong> Cabbage can be eaten raw or cooked and is known for its high vitamin C content.`,
         'spinach': `<strong>Max Height:</strong> 30cm<br><strong>Max Width:</strong> 20cm<br><strong>Growth Rate:</strong> ca. 1.5cm/day<br><strong>Recommended Distance Between Plants:</strong> 10-20cm<br><strong>Yield per Plant:</strong> ca. 100-150g<br><strong>Additional Info:</strong> Spinach is rich in iron and vitamins A and C, and is commonly used in salads and cooking.`
-    };
+    
+};
 
     // Plant type change listener (same as before)
     plantTypeSelect.addEventListener('change', function () {
@@ -178,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const rowList = document.getElementById('row-list');
         const newRow = document.createElement('div');
         newRow.className = 'row-container';
-        newRow.id = `row-${rowCount}`;
+        newRow.id =` row-${rowCount}`;
         newRow.innerHTML = `
         <div class="row mb-2">
             <div class="col-md-3">
@@ -249,9 +225,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 <input type="checkbox" class="form-check-input testing-checkbox d-none" id="splitNumIterations-${rowCount}">
             </div>
         </div>
-    
-        <button class="btn btn-danger remove-btn">Delete Row</button>
-    `;
+      <button class="btn btn-danger remove-btn">Delete Row</button>
+    </div>
+    `
+      ;
     
     rowList.appendChild(newRow);
 
@@ -283,67 +260,84 @@ document.addEventListener('DOMContentLoaded', function () {
         newTestingCheckboxes.forEach(checkbox => checkbox.classList.remove('d-none'));
         singleRowAdded = true;
     }
-});
+
 
 
     runSimulationButton.addEventListener('click', function (event) {
         event.preventDefault();  // Prevent form submission
-        
         const testingModeEnabled = document.getElementById('testingMode').checked;
         const rows = document.querySelectorAll('.row-container');
         const rowData = [];
-        
+
+        // Initialize the testingData object to store row-level testing data if testing mode is enabled
+        let testingData = {};
+        const requestData = {
+                    simName: document.getElementById('simName').value,
+                    startDate: document.getElementById('startDate').value,
+                    stepSize: parseInt(document.getElementById('stepSize').value),
+                    rowLength: parseInt(document.getElementById('rowLength').value),
+                    harvestType: document.getElementById('harvestType').value,
+                    rows: rowData,
+                    testingMode: testingModeEnabled,
+                    testingData: testingData,  // Now contains data for each row, if applicable
+                    useTemperature: document.getElementById('useTemperature').checked,
+                    useWater: document.getElementById('useWater').checked,
+                    allowWeedgrowth: document.getElementById('allowWeedgrowth').checked,
+                };
         // Collect data for each row
-        rows.forEach(row => {
+        rows.forEach((row, index) => {
             const plantType = row.querySelector('.plant-type').value;
             const plantingType = row.querySelector('.planting-type').value;
-            const rowWidth = row.querySelector('.row-width').value;
-            const rowSpacing = row.querySelector('.row-spacing').value;
-            const numSets = row.querySelector('.numIterations').value;
-    
-            const rowWidthTuple = testingModeEnabled
-                ? [parseFloat(rowWidth), parseFloat(document.getElementById(`${row.querySelector('.row-width').id}-clone`)?.value || -1)]
-                : parseFloat(rowWidth);
-            const rowSpacingTuple = testingModeEnabled
-                ? [parseFloat(rowSpacing), parseFloat(document.getElementById(`${row.querySelector('.row-spacing').id}-clone`)?.value || -1)]
-                : parseFloat(rowSpacing);
-            const numSetsTuple = testingModeEnabled
-                ? [parseInt(numSets), parseInt(document.getElementById(`${row.querySelector('.numIterations').id}-clone`)?.value || -1)]
-                : parseInt(numSets);
-    
-            rowData.push({
+            const rowWidthInput = row.querySelector('.row-width');
+            const rowSpacingInput = row.querySelector('.row-spacing');
+            const numIterationsInput = row.querySelector('.numIterations');
+
+            const rowDetails = {
                 plantType: plantType,
                 plantingType: plantingType,
-                stripWidth: rowWidthTuple,
-                rowSpacing: rowSpacingTuple,
-                numSets: numSetsTuple
-            });
-        });
-    
-        const rowLength = parseInt(document.getElementById('rowLength').value);
-        const rowLengthValue = testingModeEnabled
-            ? [rowLength, parseInt(document.getElementById('rowLength-clone')?.value || -1)]
-            : rowLength;
-    
-        // Prepare the data for the POST request
-        const requestData = {
-            simName: testingModeEnabled 
-                ? [document.getElementById('simName').value, document.getElementById('simName-clone')?.value || -1]
-                : document.getElementById('simName').value,
-            startDate: testingModeEnabled 
-                ? [document.getElementById('startDate').value, document.getElementById('startDate-clone')?.value || -1]
-                : document.getElementById('startDate').value,
-            stepSize: testingModeEnabled 
-                ? [parseInt(document.getElementById('stepSize').value), parseInt(document.getElementById('stepSize-clone')?.value || -1)]
-                : parseInt(document.getElementById('stepSize').value),
-            rowLength: rowLengthValue,
-            harvestType: testingModeEnabled 
-                ? [document.getElementById('harvestType').value, document.getElementById('harvestType-clone')?.value || -1]
-                : document.getElementById('harvestType').value,
-            rows: rowData
-        };
-    
+                stripWidth: parseFloat(rowWidthInput.value),
+                rowSpacing: parseFloat(rowSpacingInput.value),
+                numSets: parseInt(numIterationsInput.value)
+            };
         
+            // Append testing mode data if enabled
+            if (testingModeEnabled) {
+                const rowWidthClone = document.getElementById(`${rowWidthInput.id}-clone`);
+                const rowSpacingClone = document.getElementById(`${rowSpacingInput.id}-clone`);
+                const numSetsClone = document.getElementById(`${numIterationsInput.id}-clone`);
+                const startDateClone = document.getElementById('startDate-clone');
+                const stepSizeClone = document.getElementById('stepSize-clone');
+                const rowLengthClone = document.getElementById('rowLength-clone');
+                const rowsClone = document.getElementById('multiRowCheckbox');
+                if (rowWidthClone) {
+                    requestData.testingData.stripWidth = parseFloat(rowWidthClone.value);
+                }
+                if (rowSpacingClone) {
+                    requestData.testingData.rowSpacing = parseFloat(rowSpacingClone.value);
+                }
+                if (numSetsClone) {
+                    requestData.testingData.numSets = parseInt(numSetsClone.value);
+                }
+                if (startDateClone) {
+                    requestData.testingData.startDate = startDateClone.value;
+                }
+                if (stepSizeClone) {
+                    requestData.testingData.stepSize = parseInt(stepSizeClone.value);
+                }
+                if (rowLengthClone) {
+                    requestData.testingData.rowLength = parseInt(rowLengthClone.value);
+                }
+                if (rowsClone.checked) {
+                    requestData.testingData.rows = rowDetails;
+                }
+                // Append individual row testing data to the main testingData object
+            }
+
+            rowData.push(rowDetails);
+        });
+
+
+
         // Send the request to the backend
         fetch('/run_simulation/', {
             method: 'POST',
@@ -360,23 +354,33 @@ document.addEventListener('DOMContentLoaded', function () {
             return response.json();
         })
         .then(result => {
-            console.log(result,"result");
-            // Ensure data is available
-            if (Array.isArray(result) && result.length > 0) {
-                const allData = result.map(entry => entry.data);
-                if (allData.length > 0) {
-                    setupCarousel(allData); // Setup all 3 carousels
-                    setupComparisonPlot(result); // Setup the final comparison plot
-
-                }
-            } else {
-                console.error("No data found in the result.");
-            }
+            console.log('Success:', result);
+            fetchSimulationData(result.name);
         })
         .catch(error => {
             console.error('Error:', error);
         });
-    
+        function fetchSimulationData(simulationName) {
+            fetch(`/api/get_simulation_data/?name=${encodeURIComponent(simulationName)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Now you can use this data to plot graphs
+                    setupCarousel(data);
+                    setupComparisonPlot(data);
+
+                })
+                .catch(error => {
+                    console.error('Failed to fetch:', error);
+                });
+        }
+        
+       
+        
     function setupCarousel(allData) {
         // Elements for each carousel
         const carouselElement1 = document.getElementById('carouselExampleCaptions1');
@@ -458,18 +462,14 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
     
-        // Dynamically determine the X-axis key from the first entry (assuming the first entry has this key)
-        // This key should represent the varying parameter across different simulation runs
-        const xKey = Object.keys(allData[0]).find(key => key !== 'data');
-        console.log("Dynamic X-axis key identified:", xKey);
-    
-        // Use the dynamically determined key for the X-axis
-        const xValues = allData.map(entry => entry[xKey]);
-    
-        // Extract only the last value for the selected parameter (yAxisKey) from each iteration's data
+        // Assume each entry in allData has an 'outputs' array with details for each output
+        const xValues = allData.map(entry => entry.param_value); // x-axis based on the parameter values changed in each iteration
+        const xKey = allData[0].param_name;  // Assume the parameter name is the same for all entries
+
+        // Find the last instance of the desired yAxisKey for each iteration's outputs
         const yValues = allData.map(entry => {
-            const series = entry.data[yAxisKey];  // Get the array for the selected parameter (growth, yield, etc.)
-            return series ? series[series.length - 1] : null;  // Get the last value of the array or null if not present
+            const lastOutput = entry.outputs[entry.outputs.length - 1]; // get the last output of each iteration
+            return lastOutput[yAxisKey]; // return the value of the yAxisKey from the last output
         });
     
         const trace = {
@@ -477,11 +477,11 @@ document.addEventListener('DOMContentLoaded', function () {
             y: yValues,
             type: 'scatter',
             mode: 'lines+markers',
-            name: `Comparison of ${yAxisKey}`
+            name:` Comparison of ${yAxisKey}`
         };
     
         const layout = {
-            title: `Comparison of ${yAxisKey} Across Iterations`,
+            title:`Comparison of ${yAxisKey} Across Iterations`,
             xaxis: { title: xKey },
             yaxis: { title: yAxisKey.charAt(0).toUpperCase() + yAxisKey.slice(1) }  // Capitalize the Y-axis key
         };
@@ -493,9 +493,10 @@ document.addEventListener('DOMContentLoaded', function () {
         
     
     function displayFirstPlot(data, plotId) {
-        const dates = data.time || [];
-        const yields = data.yield || [];
-        const growths = data.growth || [];
+
+        const dates = data.outputs.map(output => output.date);
+        const yields = data.outputs.map(output => output.yield);
+        const growths = data.outputs.map(output => output.growth);
         const growthTrace = {
             x: dates,
             y: growths,
@@ -522,11 +523,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function displaySecondPlot(data, plotId) {
-        const dates = data.time || [];
-        const yields = data.yield || [];
-        const growths = data.growth || [];
-        const waters = data.water || [];
-        const overlaps = data.overlap || [];
+        const dates = data.outputs.map(output => output.date);
+            const yields = data.outputs.map(output => output.yield);
+            const growths = data.outputs.map(output => output.growth);
+            const waters = data.outputs.map(output => output.water);
+            const overlaps = data.outputs.map(output => output.overlap);
 
         
 
@@ -660,10 +661,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function displayHeatmap(data, plotId) {
-        const heatmapData = data.map || [];
-        const boundary = data.boundary || [];
-        const weed = data.weed || []; 
-        const dates = data.time || [];
+        const heatmapData = data.outputs.map(output => output.map);
+        const boundary = data.outputs.map(output => output.boundary);
+        const weed = data.outputs.map(output => output.weed);
+        const dates = data.outputs.map(output => output.date);
         const weedArray = weed;
         const slider = document.getElementById('dateSlider');
         const sliderValueDisplay = document.getElementById('sliderValue');
@@ -693,7 +694,6 @@ document.addEventListener('DOMContentLoaded', function () {
             const weedData = weed[index];
             const showStrips = document.getElementById('showStrips').checked;
             const selectedOption = document.getElementById('heatmapOption').value;
-
 
     
             if (mapData) {
@@ -729,20 +729,20 @@ document.addEventListener('DOMContentLoaded', function () {
                     },
                     opacity: 0.5  // Adjust opacity so that both layers are visible
                 };
-                `
-                const stripTrace = {
-                    z: rowArray2D,
-                    type: 'heatmap',
-                    colorscale: [
-                        [0, 'rgb(200,200,200)'],
-                        [1, 'rgb(150,150,150)']
-                    ],
-                    showscale: false,
-                    opacity: 0.3
-                };
-                `
+                
+                //const stripTrace = {
+                //    z: rowArray2D,
+                //    type: 'heatmap',
+                //    colorscale: [
+                //        [0, 'rgb(200,200,200)'],
+                //        [1, 'rgb(150,150,150)']
+                //    ],
+                //    showscale: false,
+                //    opacity: 0.3
+               // };
+                
                 const layout = {
-                    title: `Heatmap on ${dates[index]}`,
+                    title:" Heatmap on ${dates[index]}",
                     xaxis: {
                         title: 'X Axis',
                         showgrid: false,
@@ -770,7 +770,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 Plotly.newPlot(plotId, traces, layout);
             } else {
-                console.error(`No data found for index ${index}.`);
+                console.error("No data found for index ${index}.");
             }
         }
 
@@ -780,4 +780,5 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     
     },);
+});
 });
