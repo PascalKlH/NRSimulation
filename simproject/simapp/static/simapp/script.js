@@ -8,9 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const testingModeCheckbox = document.getElementById('testingMode');
     let currentlyCheckedBox = null;
     let singleRowAdded = false;
-    
 
-    
 
 
     // Toggle testing mode
@@ -229,25 +227,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 <input type="checkbox" class="form-check-input testing-checkbox d-none" id="splitNumIterations-${rowCount}">
             </div>
         </div>
-    
-        <!-- Planting Cost and Revenue -->
-        <div class="row mb-2">
-            <div class="col-md-3">
-                <label for="planting_cost-${rowCount}" class="form-label">Planting Cost (per crop):</label>
-            </div>
-            <div class="col-md-8">
-                <input type="number" id="planting_cost-${rowCount}" class="form-control planting_cost" placeholder="Cost per planted crop" value="1" min="1" max="1000">
-            </div>
-        </div>
-        <div class="row mb-2">
-            <div class="col-md-3">
-                <label for="revenue-${rowCount}" class="form-label">Revenue (per Kg Fresh Weight):</label>
-            </div>
-            <div class="col-md-8">
-                <input type="number" id="revenue-${rowCount}" class="form-control revenue" placeholder="Revenue per Kg Fresh weight" value="1" min="1" max="1000">
-            </div>
-        </div>
-    
         <!-- Delete Row Button -->
         <div class="row mb-2">
             <div class="col-md-12">
@@ -381,7 +360,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return response.json();
         })
         .then(result => {
-            console.log('Success:', result);
             fetchSimulationData(result.name);
         })
         .catch(error => {
@@ -399,6 +377,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     // Now you can use this data to plot graphs
                     setupCarousel(data);
                     setupComparisonPlot(data);
+                    console.log(data);
 
                 })
                 .catch(error => {
@@ -413,6 +392,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const carouselElement1 = document.getElementById('carouselExampleCaptions1');
         const carouselElement2 = document.getElementById('carouselExampleCaptions2');
         const carouselElement3 = document.getElementById('carouselExampleCaptions3');
+
 
         let totalSlides = allData.length;
 
@@ -433,6 +413,27 @@ document.addEventListener('DOMContentLoaded', function () {
         carouselElement3.addEventListener('slid.bs.carousel', function (event) {
             let currentIndex = event.to % totalSlides;  // Loop back to first slide after last
         });
+        const selectPlotType = document.getElementById('selectPlotType');
+        selectPlotType.addEventListener('change', function() {
+            const selectedPlotType = selectPlotType.value;
+            updateAllSecondCarouselPlots(selectedPlotType,allData);
+        });
+    
+        function updateAllSecondCarouselPlots(plotType, allData) {
+            const allPlot2Elements = document.querySelectorAll('[id^="plot2_"]');
+            console.log(`Updating ${allPlot2Elements.length} plots with type ${plotType}`);
+        
+            allPlot2Elements.forEach((plotContainer, index) => {
+                const plotId = plotContainer.id; // Ensure IDs are unique and correctly assigned
+                if (allData[index]) { // Check if data at index exists
+                    const data = allData[index];
+                    displaySecondPlot(data, plotId, plotType);
+                } else {
+                    console.error(`No data available for plot index ${index}`);
+                }
+            });
+        }
+        
     }
 
 // Function to create and populate slides and plots once
@@ -440,35 +441,36 @@ document.addEventListener('DOMContentLoaded', function () {
     function createAndPopulateSlides(numSlides, carouselId, plotPrefix, allData, plotFunction) {
         const carouselInner = document.querySelector(`#${carouselId} .carousel-inner`);
         const carouselIndicators = document.querySelector(`#${carouselId} .carousel-indicators`);
-
-        carouselInner.innerHTML = ''; // Clear existing slides
-        carouselIndicators.innerHTML = ''; // Clear indicators
-
+    
+        carouselInner.innerHTML = '';  // Clear existing slides
+        carouselIndicators.innerHTML = '';  // Clear indicators
+    
         for (let i = 0; i < numSlides; i++) {
             const slide = document.createElement('div');
             slide.classList.add('carousel-item');
             if (i === 0) slide.classList.add('active');
-
             const content = document.createElement('div');
             const plotId = `${plotPrefix}${i}`;
-            content.innerHTML = `<div id="${plotId}" class="plot-container"></div>`;
+            content.innerHTML += `<div id="${plotId}" class="plot-container"></div>`;
             slide.appendChild(content);
-
             carouselInner.appendChild(slide);
-
             const indicator = document.createElement('li');
             indicator.setAttribute('data-bs-target', `#${carouselId}`);
             indicator.setAttribute('data-bs-slide-to', i);
             if (i === 0) indicator.classList.add('active');
-
             carouselIndicators.appendChild(indicator);
-
-            // Use setTimeout to delay the plotting, ensuring that the DOM has time to render the new elements
-            setTimeout(() => {
-                plotFunction(allData[i], plotId);  // Pass the unique plot ID
-            }, 0);
         }
+    
+    
+        // Initialize the plot with the default selection for all slides
+        setTimeout(() => {
+            for (let i = 0; i < numSlides; i++) {
+                const plotId = `${plotPrefix}${i}`;
+                plotFunction(allData[i], plotId, 'growth');  // Default to 'growth' for the second carousel
+            }
+        }, 0);
     }
+    
     // Function to setup the comparison plot
     function setupComparisonPlot(result) {
         const yAxisSelect = document.getElementById('y-axis-select');
@@ -549,143 +551,89 @@ document.addEventListener('DOMContentLoaded', function () {
 
     }
 
-    function displaySecondPlot(data, plotId) {
+    function displaySecondPlot(data, plotId, plotType) {
         const dates = data.outputs.map(output => output.date);
-            const yields = data.outputs.map(output => output.yield);
-            const growths = data.outputs.map(output => output.growth);
-            const waters = data.outputs.map(output => output.water);
-            const overlaps = data.outputs.map(output => output.overlap);
-
-        
-
-        // Create traces for each data series
-        const growthTrace = {
-            x: dates,
-            y: growths,
-            type: 'scatter',
-            mode: 'lines+markers',
-            name: 'Growthrate'
-        };
-
-        const yieldTrace = {
-            x: dates,
-            y: yields,
-            type: 'scatter',
-            mode: 'lines+markers',
-            name: 'Yield',
-            yaxis: 'y2'
-        };
-
-        const waterTrace = {
-            x: dates,
-            y: waters,
-            type: 'scatter',
-            mode: 'lines+markers',
-            name: 'Water'
-        };
-
-        const overlapTrace = {
-            x: dates,
-            y: overlaps,
-            type: 'scatter',
-            mode: 'lines+markers',
-            name: 'Overlap'
-        };
-
-        // Define layouts for each plot
-        const layout1 = {
-            title: 'Growthrate and Yield Over Time',
-            xaxis: { title: 'Date' },
-            yaxis: { title: 'Growthrate' },
-            yaxis2: { title: 'Yield', overlaying: 'y', side: 'right' }
-        };
-
-        const layout2 = {
-            title: 'Water Over Time',
-            xaxis: { title: 'Date' },
-            yaxis: { title: 'Water' }
-        };
-
-        const layout3 = {
-            title: 'Overlap Over Time',
-            xaxis: { title: 'Date' },
-            yaxis: { title: 'Overlap' }
-        };
-        
-
-        // Plot the charts
-        Plotly.newPlot(plotId, [waterTrace], layout2);
-       // Plotly.newPlot('plot3', [overlapTrace], layout3);
-
-        // Handle additional plots for weather data if available
-        if (data.weather) {
-            const tempTrace = {
-                x: data.weather.dates,
-                y: data.weather.temps,
-                type: 'scatter',
-                mode: 'lines+markers',
-                name: 'Temperature'
-            };
-
-            const humTrace = {
-                x: data.weather.dates,
-                y: data.weather.hums,
-                type: 'scatter',
-                mode: 'lines+markers',
-                name: 'Humidity',
-                yaxis: 'y2'
-            };
-
-            const windTrace = {
-                x: data.weather.dates,
-                y: data.weather.winds,
-                type: 'scatter',
-                mode: 'lines+markers',
-                name: 'Wind'
-            };
-
-            const rainTrace = {
-                x: data.weather.dates,
-                y: data.weather.rains,
-                type: 'scatter',
-                mode: 'lines+markers',
-                name: 'Rain'
-            };
-
-            const layout4 = {
-                title: 'Temperature and Humidity Over Time',
-                xaxis: { title: 'Date' },
-                yaxis: { title: 'Temperature' },
-                yaxis2: { title: 'Humidity', overlaying: 'y', side: 'right' }
-            };
-
-            const layout5 = {
-                title: 'Wind Over Time',
-                xaxis: { title: 'Date' },
-                yaxis: { title: 'Wind' }
-            };
-
-            const layout6 = {
-                title: 'Rain Over Time',
-                xaxis: { title: 'Date' },
-                yaxis: { title: 'Rain' }
-            };
-
-            // Plot weather data
-            Plotly.newPlot('plot4', [tempTrace, humTrace], layout4);
-            Plotly.newPlot('plot5', [windTrace], layout5);
-            Plotly.newPlot('plot6', [rainTrace], layout6);
+        let traces = [];
+        let layout;
+    
+        switch (plotType) {
+            case "growth":
+                traces.push({
+                    x: dates,
+                    y: data.outputs.map(output => output.growth),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Growthrate'
+                });
+                layout = { title: 'Growth Over Time', xaxis: { title: 'Date' }, yaxis: { title: 'Growthrate' } };
+                break;
+            case "yield":
+                traces.push({
+                    x: dates,
+                    y: data.outputs.map(output => output.yield),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Yield'
+                });
+                layout = { title: 'Yield Over Time', xaxis: { title: 'Date' }, yaxis: { title: 'Yield' } };
+                break;
+            case "temperature":
+                traces.push({
+                    x: dates,
+                    y: data.outputs.map(output => output.temperature),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Temperature'
+                });
+                layout = { title: 'Temperature Over Time', xaxis: { title: 'Date' }, yaxis: { title: 'Temperature' } };
+                break;
+            case "water":
+                traces.push({
+                    x: dates,
+                    y: data.outputs.map(output => output.water),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Water'
+                });
+                layout = { title: 'Water Over Time', xaxis: { title: 'Date' }, yaxis: { title: 'Water' } };
+                break;
+            case "overlap":
+                traces.push({
+                    x: dates,
+                    y: data.outputs.map(output => output.overlap),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Overlap'
+                });
+                layout = { title: 'Overlap Over Time', xaxis: { title: 'Date' }, yaxis: { title: 'Overlap' } };
+                break;
+            case "rain":
+                traces.push({
+                    x: dates,
+                    y: data.outputs.map(output => output.rain),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Rain'
+                });
+                layout = { title: 'Rain Over Time', xaxis: { title: 'Date' }, yaxis: { title: 'Rain' } };
+                break;
+            case "time_needed":
+                traces.push({
+                    x: dates,
+                    y: data.outputs.map(output => output.time_needed),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Time Needed'
+                });
+                layout = { title: 'Time Needed Over Time', xaxis: { title: 'Date' }, yaxis: { title: 'Time Needed' } };
+                break;
         }
-
-        // Dropdown event listener to toggle plots
-        //document.getElementById('plotSelector').addEventListener('change', function() {
-           //const selectedPlot = this.value;
-           // ['plot2', 'plot3', 'plot4', 'plot5', 'plot6'].forEach(plotId => {
-           //     document.getElementById(plotId).classList.add('d-none');
-           // });
-           // document.getElementById(selectedPlot).classList.remove('d-none');
-       // });
+    
+        // Clear previous plot
+        Plotly.react(plotId, traces, layout);
     }
+    
+    
 
     function displayHeatmap(data, plotId) {
         const heatmapData = data.outputs.map(output => output.map);

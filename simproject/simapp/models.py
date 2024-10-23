@@ -184,6 +184,9 @@ class DataModelOutput(models.Model):
     map = models.JSONField()
     weed = models.JSONField()
     time_needed = models.FloatField()
+    profit = models.FloatField()
+    rain = models.FloatField()
+    temperature = models.FloatField()
     def set_data(self, data):
         """
         Set the output data for this iteration.
@@ -196,6 +199,10 @@ class DataModelOutput(models.Model):
         self.map = data.get('map')
         self.weed = data.get('weed')
         self.time_needed = data.get('time_needed')
+        self.profit = data.get('profit')
+        self.rain = data.get('rain')
+        self.temperature = data.get('temperature')
+
 
         
 
@@ -212,6 +219,9 @@ class DataModelOutput(models.Model):
             'map': self.map,
             'weed': self.weed,
             'time_needed': self.time_needed,
+            'profit': self.profit,
+            'rain': self.rain,
+            'temperature': self.temperature
         }
 
 class Plant(models.Model):
@@ -246,6 +256,7 @@ class Plant(models.Model):
     H_max = models.FloatField()  # Maximum height
     k = models.FloatField()  # Growth rate constant
     n = models.IntegerField()  # Shape factor
+    b = models.FloatField()  # Shape factor
     max_moves = models.IntegerField()  # Maximum moves
     Yield = models.FloatField()  # Yield per plant
     size_per_plant = models.FloatField()  # Size per plant

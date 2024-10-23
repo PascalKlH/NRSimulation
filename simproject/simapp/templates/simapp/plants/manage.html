@@ -1,0 +1,13 @@
+{% extends "simapp/index.html" %}
+{% block content %}
+<h2>{% if plant %}Edit{{ plant.name }}{% else %}Create New Plant{% endif %}</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save</button>
+    {% if plant %}
+    <a href="{% url 'plant_delete' plant.id %}" onclick="return confirm('Are you sure?');">Delete</a>
+    {% endif %}
+</form>
+<a href="{% url 'plant_list' %}">Back to List</a>
+{% endblock %}

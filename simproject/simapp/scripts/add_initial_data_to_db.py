@@ -8,11 +8,14 @@ plants_data = [
         "H_max": 30,
         "k": 0.001,
         "n": 2,
+        "b":855,
         "max_moves": 5,
         "Yield": 0.8,
         "size_per_plant": 7068.3,
         "row_distance": 30,
         "column_distance": 30,
+        "planting_cost": 0.5,
+        "revenue": 1.5
     },
     {
         "name": "cabbage",
@@ -20,11 +23,14 @@ plants_data = [
         "H_max": 40,
         "k": 0.0005,
         "n": 2,
+        "b":855,
         "max_moves": 5,
         "Yield": 1.6,
         "size_per_plant": 9000.3,
         "row_distance": 60,
         "column_distance": 40,
+        "planting_cost": 0.5,
+        "revenue": 1.5
     },
     {
         "name": "spinach",
@@ -32,11 +38,14 @@ plants_data = [
         "H_max": 30,
         "k": 0.002,
         "n": 2,
+        "b":855,
         "max_moves": 5,
         "Yield": 0.4,
         "size_per_plant": 5068.3,
         "row_distance": 20,
         "column_distance": 30,
+        "planting_cost": 0.5,
+        "revenue": 1.5
     },
     {
         "name": "weed",
@@ -44,11 +53,14 @@ plants_data = [
         "H_max": 30,
         "k": 0.001,
         "n": 2,
+        "b":855,
         "max_moves": 5,
         "Yield": 0.8,
         "size_per_plant": 7068.3,
         "row_distance": 30,
         "column_distance": 30,
+        "planting_cost": 0.5,
+        "revenue": 1.5
     },
     {
         "name": "Buckweed",
@@ -62,6 +74,9 @@ plants_data = [
         "size_per_plant": 7068.3,
         "row_distance": 30,
         "column_distance": 30,
+        "planting_cost": 0.5,
+        "revenue": 1.5
+        
     },
     {
         "name": "Lactuca Sativa L.",
@@ -75,6 +90,8 @@ plants_data = [
         "size_per_plant": 7068.3,
         "row_distance": 30,
         "column_distance": 30,
+        "planting_cost": 0.5,
+        "revenue": 1.5
     },
 ]
 
@@ -95,7 +112,6 @@ def add_initial_weather_data_to_db():
     print("Loading weather data...")
     base_dir = os.path.dirname(os.path.abspath(__file__))  # Gets the directory where the script is located
     data_file = os.path.join(base_dir, 'data', 'transformed_weather_data.csv')  # Path to the CSV file
-    print("Loading weather data...")
     try:
         df = pd.read_csv(data_file)
         for _, row in df.iterrows():

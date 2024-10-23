@@ -1,0 +1,10 @@
+{% extends "simapp/index.html" %}
+{% block content %}
+<h2>Plant List</h2>
+<ul>
+    {% for plant in plants %}
+    <li><a href="{% url 'plant_manage' plant.id %}">{{ plant.name }}</a></li>
+    {% endfor %}
+</ul>
+<a href="{% url 'plant_manage' %}">Create New Plant</a>
+{% endblock %}

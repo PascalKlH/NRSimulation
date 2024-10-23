@@ -7,6 +7,10 @@ from .models import  DataModelOutput, SimulationIteration
 from .models import Weather, Plant,DataModelInput
 from django.shortcuts import redirect
 from django.contrib import messages
+from django.urls import reverse
+from django.shortcuts import get_object_or_404
+from .forms import PlantForm
+
 
 
 
@@ -73,7 +77,11 @@ def get_simulation_data(request):
                     "water": output.water,
                     "overlap": output.overlap,
                     "map": output.map,
-                    "weed": output.weed
+                    "weed": output.weed,
+                    "time_needed": output.time_needed,
+                    "profit": output.profit,
+                    "rain": output.rain,
+                    "temperature": output.temperature
                 }
                 iteration_data["outputs"].append(output_data)
             data_by_iteration.append(iteration_data)
@@ -82,4 +90,30 @@ def get_simulation_data(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+def plant_list(request):
+    plants = Plant.objects.all()
+    return render(request, 'simapp/plants/list.html', {'plants': plants})
 
+def plant_manage(request, plant_id=None):
+    print("HERE")
+    if plant_id:
+        plant = get_object_or_404(Plant, pk=plant_id)
+        print(plant)
+    else:
+        print("HEdRE")
+        plant = None
+
+    if request.method == 'POST':
+        form = PlantForm(request.POST, instance=plant)
+        if form.is_valid():
+            form.save()
+            return redirect(reverse('plant_list'))
+    else:
+        form = PlantForm(instance=plant)
+
+    return render(request, 'simapp/plants/manage.html', {'form': form, 'plant': plant})
+
+def plant_delete(request, plant_id):
+    plant = get_object_or_404(Plant, pk=plant_id)
+    plant.delete()
+    return redirect(reverse('plant_list'))

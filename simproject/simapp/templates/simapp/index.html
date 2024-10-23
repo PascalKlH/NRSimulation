@@ -14,6 +14,25 @@
         <div class="container">
             <h1 class="my-4 text-center">Grid-based Polycultural Simulation</h1>
             <div class="accordion" id="accordionPanelsStayOpenExample">
+                <!-- Accordion Item for Plant Management -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingManagePlants">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseManagePlants" aria-expanded="false" aria-controls="collapseManagePlants">
+                            Manage Plants
+                        </button>
+                    </h2>
+                    <div id="collapseManagePlants" class="accordion-collapse collapse" aria-labelledby="headingManagePlants" data-bs-parent="#accordionPanelsStayOpenExample">
+                        <div class="accordion-body">
+                            <ul>
+                                {% for plant in plants %}
+                                <li><a href="{% url 'plant_manage' plant.id %}">{{ plant.name }}</a></li>
+                                {% endfor %}
+                            </ul>
+                            <a href="{% url 'plant_manage' %}" class="btn btn-primary">Create New Plant</a>
+                        </div>
+                    </div>
+                </div>
+            <div class="accordion" id="accordionPanelsStayOpenExample">
                 <!-- Accordion Item for Entering Simulation Name -->
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingPlot">
@@ -207,6 +226,18 @@
                         <div id="panelsStayOpen-collapseThree" class="accordion-collapse collapse">
                             <div class="accordion-body">
                                 <!-- Carousel for Second Plot -->
+                                <div class="controls mb-4">
+                                    <!-- Dropdown for selecting the plot type -->
+                                    <select id="selectPlotType" class="form-select mb-2">
+                                        <option value="growth">Growth</option>
+                                        <option value="yield">Yield</option>
+                                        <option value="temperature">Temperature</option>
+                                        <option value="water">Water</option>
+                                        <option value="overlap">Overlap</option>
+                                        <option value="rain">Rain</option>
+                                        <option value="time_needed">time needed</option>
+                                    </select>
+                                </div>
                                 <div id="carouselExampleCaptions2" class="carousel slide" data-bs-ride="carousel">
                                     <div class="carousel-indicators">
                                         <!-- Indicators will be generated dynamically -->

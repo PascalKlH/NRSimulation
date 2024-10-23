@@ -10,6 +10,8 @@ from ..models import DataModelInput, DataModelOutput, SimulationIteration, RowDe
 import time
 import csv
 import os
+from dateutil import parser
+from django.core.exceptions import ObjectDoesNotExist
 
 class Crop:
     """
@@ -461,7 +463,6 @@ class Strip:
         self.num_plants = 0  # Will be calculated during planting
         self.sowing_date = sim.current_date
         self.sim = sim
-
         # Tracking previous sizes for the stability check (initiate with None)
         self.previous_sizes = [None] * 5  # List to track the last 5 size changes
 
@@ -474,11 +475,14 @@ class Strip:
                 "H_max": int(plant.H_max),
                 "k": float(plant.k),
                 "n": int(plant.n),
+                "b": int(plant.b),
                 "max_moves": int(plant.max_moves),
                 "Yield": float(plant.Yield),
                 "size_per_plant": float(plant.size_per_plant),
                 "row-distance": int(plant.row_distance),
                 "column-distance": int(plant.column_distance),
+                "planting-cost": float(plant.planting_cost),
+                "revenue": float(plant.revenue),
             }
         except Plant.DoesNotExist:
             print(f"Plant {plant_name} not found in the database.")
@@ -551,7 +555,7 @@ class Strip:
         row_length = strip_parameters["rowLength"]  # Length of the row
 
         # Calculate offsets
-        offset = 40 // 2
+        offset = plant_distance // 2
 
         # Adjust indices to ensure plants are not on the edges
         row_start = offset
@@ -561,7 +565,7 @@ class Strip:
 
         # Generate grid indices with adjusted bounds
         row_indices = np.arange(row_start, row_end, plant_distance)
-        col_indices = np.arange(col_start, col_end, 40)
+        col_indices = np.arange(col_start, col_end, plant_distance)
 
         # Pass row and column indices in the correct order
         self.apply_planting(row_indices, col_indices, plant_parameters, sim)
@@ -767,9 +771,7 @@ class Simulation:
             self.input_data["startDate"] + ":00:00:00", "%Y-%m-%d:%H:%M:%S"
         )
         self.stepsize = int(self.input_data["stepSize"])
-        self.strips = np.array(
-            [
-                Strip(
+        self.strips = np.array([Strip(
                     strip["stripWidth"],
                     strip["plantType"],
                     strip["plantingType"],
@@ -878,7 +880,6 @@ class Simulation:
         for strip in self.strips:
             strip.planting(self)
         #while not self.finish:
-        print(self.input_data['startDate'])
         while self.current_date < datetime.strptime(self.input_data["startDate"] + ":00:00:00", "%Y-%m-%d:%H:%M:%S") + timedelta(days=53):
 
             total_growthrate = 0
@@ -893,17 +894,18 @@ class Simulation:
             end_time = time.time()
             time_needed = end_time - start_time
             index_where = np.where(self.crops_pos_layer > 0)  
-            print((index_where))
             yields = np.sum(self.crop_size_layer[index_where])*11
-            self.record_data(time_needed,iteration_instance,total_growthrate,total_overlap,yields)
+            profit = yields * self.crops_obj_layer[index_where[0][0],index_where[1][0]].parameters["revenue"]
+            self.record_data(time_needed,iteration_instance,total_growthrate,total_overlap,yields,profit)
             self.current_date += timedelta(hours=self.stepsize)
             #for strip in self.strips:
              #   strip.harvesting(self)
 
 
 
-    def record_data(self,time_needed,iteration_instance,total_growthrate,total_overlap,yields):
+    def record_data(self,time_needed,iteration_instance,total_growthrate,total_overlap,yields,profit):
         data = {
+
             "date": self.current_date,
             "yield": yields,
             "growth": total_growthrate,
@@ -913,6 +915,9 @@ class Simulation:
             "boundary": self.boundary_layer.tolist(),
             "weed": self.weeds_size_layer.tolist(),
             "time_needed": time_needed,
+            "profit": profit,
+            "temperature": self.weather_data[self.current_date]["temperature"],
+            "rain": self.weather_data[self.current_date]["rain"],
         }
         output_instance = DataModelOutput(
             iteration=iteration_instance
@@ -955,6 +960,7 @@ def main(input_data):
     """
     Entry point for running simulations with given input data, considering testing mode adjustments.
     """
+    print(input_data)
     input_instance = save_initial_data(input_data)
     weather_data = fetch_weather_data()
 
@@ -1017,14 +1023,31 @@ def save_initial_data(input_data):
 
 
 
+
 def fetch_weather_data():
     try:
+        # Fetch weather data as a QuerySet of dictionaries
         weather_data = Weather.objects.values('date', 'rain', 'temperature')
-        weather_data_list = list(weather_data)
-        return weather_data_list
-    except Weather.DoesNotExist:
+        weather_data_dict = {}
+
+        for data in weather_data:
+            try:
+                if data["date"] not in [None, 'NaT', '']:
+                    # More flexible parsing that handles a variety of date formats
+                    data['date'] = parser.parse(data["date"])
+                else:
+                    continue  # Skip entries with no valid date
+            except ValueError:
+                print(f"Skipping invalid date format: {data['date']}")
+                continue  # Skip entries with unparseable dates
+
+            weather_data_dict[data['date']] = data
+
+        return weather_data_dict
+    except ObjectDoesNotExist:
         print("Weather data not found in the database.")
         return None
+
 
 
 def handle_testing_mode(input_data, input_instance, weather_data):
