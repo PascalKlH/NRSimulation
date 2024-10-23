@@ -156,6 +156,7 @@ document.addEventListener('DOMContentLoaded', function () {
         newRow.className = 'row-container';
         newRow.id =` row-${rowCount}`;
         newRow.innerHTML = `
+        <!-- Plant Type -->
         <div class="row mb-2">
             <div class="col-md-3">
                 <label for="plant-type-${rowCount}" class="form-label">Plant Type:</label>
@@ -172,6 +173,7 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
         </div>
     
+        <!-- Row Width -->
         <div class="row mb-2">
             <div class="col-md-3">
                 <label for="row-width-${rowCount}" class="form-label">Width of the row (cm):</label>
@@ -184,6 +186,7 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
         </div>
     
+        <!-- Planting Type -->
         <div class="row mb-2">
             <div class="col-md-3">
                 <label for="planting-type-${rowCount}" class="form-label">Planting Type:</label>
@@ -201,6 +204,7 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
         </div>
     
+        <!-- Row Spacing -->
         <div class="row mb-2">
             <div class="col-md-3">
                 <label for="row-spacing-${rowCount}" class="form-label">Space between plants (cm):</label>
@@ -213,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
         </div>
     
-        <!-- New section for Number of Iterations -->
+        <!-- Number of Iterations -->
         <div class="row mb-2">
             <div class="col-md-3">
                 <label for="num-iterations-${rowCount}" class="form-label">Number of Iterations:</label>
@@ -225,10 +229,33 @@ document.addEventListener('DOMContentLoaded', function () {
                 <input type="checkbox" class="form-check-input testing-checkbox d-none" id="splitNumIterations-${rowCount}">
             </div>
         </div>
-      <button class="btn btn-danger remove-btn">Delete Row</button>
-    </div>
-    `
-      ;
+    
+        <!-- Planting Cost and Revenue -->
+        <div class="row mb-2">
+            <div class="col-md-3">
+                <label for="planting_cost-${rowCount}" class="form-label">Planting Cost (per crop):</label>
+            </div>
+            <div class="col-md-8">
+                <input type="number" id="planting_cost-${rowCount}" class="form-control planting_cost" placeholder="Cost per planted crop" value="1" min="1" max="1000">
+            </div>
+        </div>
+        <div class="row mb-2">
+            <div class="col-md-3">
+                <label for="revenue-${rowCount}" class="form-label">Revenue (per Kg Fresh Weight):</label>
+            </div>
+            <div class="col-md-8">
+                <input type="number" id="revenue-${rowCount}" class="form-control revenue" placeholder="Revenue per Kg Fresh weight" value="1" min="1" max="1000">
+            </div>
+        </div>
+    
+        <!-- Delete Row Button -->
+        <div class="row mb-2">
+            <div class="col-md-12">
+                <button class="btn btn-danger remove-btn">Delete Row</button>
+            </div>
+        </div>
+    `;
+    
     
     rowList.appendChild(newRow);
 

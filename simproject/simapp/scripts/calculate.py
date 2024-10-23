@@ -8,6 +8,8 @@ from multiprocessing import cpu_count
 from simapp.models import Plant
 from ..models import DataModelInput, DataModelOutput, SimulationIteration, RowDetail, Weather
 import time
+import csv
+import os
 
 class Crop:
     """
@@ -156,23 +158,21 @@ class Crop:
         random_factor = random.uniform(1, 1.001)
 
         # Base growth calculation
-        growth = self.parameters["k"] * (1 - self.overlap) * water_factor * temp_factor * random_factor
-        print(growth)
+        growth = 0.00425 *((1-self.overlap)*0.5)# * water_factor * temp_factor * random_factor
         # Detailed growth rate calculation using the logistic growth model modified with environmental factors
         '''
         h = self.parameters["H_max"]
         r = self.parameters["k"]
         m = self.parameters["n"]
         '''
-        h = 24.41  # This could represent the asymptotic maximum size or similar scale factor
-        r = 0.00520833  # This could represent the growth rate or similar factor
-        m = 2.077  # This could represent the curvature or similar factor
+        h = 30  # This could represent the asymptotic maximum size or similar scale factor
+        r = 0.0125 # This could represent the growth rate or similar factor
+        m = 2.077# This could represent the curvature or similar factor
         x = t_diff_hours
-        b=35.625
+        b= 35.625
         growth_rate=(h*b*r)/(m-1)*np.exp(-r*x)*(1+b*np.exp(-r*x))**(m/(1-m))
         #get the betrag of the growth rate
-        growth_rate = abs(growth_rate)
-        print(growth_rate)
+        growth_rate = abs(growth_rate*self.sim.stepsize*(1-self.overlap))
         #size =  h * (1 + b * np.exp(-r * x))**(1 / (1 - m))
         #growth_rate = size -self.size
         #self.size = size
@@ -259,7 +259,7 @@ class Crop:
             self.overlap = relative_overlap
             if self.moves < self.parameters["max_moves"]:
                 pass
-                self.move_plant(mask,size_layer,obj_layer,pos_layer)
+                #self.move_plant(mask,size_layer,obj_layer,pos_layer)
         else:
             self.overlap = 0  # Reset overlap if no interference
 
@@ -551,7 +551,7 @@ class Strip:
         row_length = strip_parameters["rowLength"]  # Length of the row
 
         # Calculate offsets
-        offset = plant_distance // 2
+        offset = 40 // 2
 
         # Adjust indices to ensure plants are not on the edges
         row_start = offset
@@ -561,7 +561,7 @@ class Strip:
 
         # Generate grid indices with adjusted bounds
         row_indices = np.arange(row_start, row_end, plant_distance)
-        col_indices = np.arange(col_start, col_end, plant_distance)
+        col_indices = np.arange(col_start, col_end, 40)
 
         # Pass row and column indices in the correct order
         self.apply_planting(row_indices, col_indices, plant_parameters, sim)
@@ -871,13 +871,16 @@ class Simulation:
     def run_simulation(self,iteration_instance):
         """
         Executes the simulation loop for crop and weed growth.
-        Continuously updates the simulation state until a specified end date is reached.
+        Continuously updates the simulation state until a specdified end date is reached.
         Records the state of the simulation in a DataFrame for later analysis.
         """
 
         for strip in self.strips:
             strip.planting(self)
-        while not self.finish:
+        #while not self.finish:
+        print(self.input_data['startDate'])
+        while self.current_date < datetime.strptime(self.input_data["startDate"] + ":00:00:00", "%Y-%m-%d:%H:%M:%S") + timedelta(days=53):
+
             total_growthrate = 0
             total_overlap = 0
             start_time = time.time()
@@ -885,22 +888,24 @@ class Simulation:
                 growthrate,overlap = self.grow_plants(strip)
                 total_growthrate += growthrate
                 total_overlap += overlap
-                strip.harvesting(self)
                 if self.input_data["allowWeedgrowth"]:
                     self.grow_weeds(strip)          
             end_time = time.time()
             time_needed = end_time - start_time
-            num_plants = np.sum(self.crops_pos_layer > 0)
-           # print(np.sum(self.crop_size_layer)/(num_plants*150.348))
-            print(num_plants)
-            self.record_data(time_needed,iteration_instance,total_growthrate,total_overlap,num_plants)
+            index_where = np.where(self.crops_pos_layer > 0)  
+            print((index_where))
+            yields = np.sum(self.crop_size_layer[index_where])*11
+            self.record_data(time_needed,iteration_instance,total_growthrate,total_overlap,yields)
             self.current_date += timedelta(hours=self.stepsize)
+            #for strip in self.strips:
+             #   strip.harvesting(self)
 
 
-    def record_data(self,time_needed,iteration_instance,total_growthrate,total_overlap,num_plants):
+
+    def record_data(self,time_needed,iteration_instance,total_growthrate,total_overlap,yields):
         data = {
             "date": self.current_date,
-            "yield": np.sum(self.crop_size_layer),#/(num_plants*150.348),
+            "yield": yields,
             "growth": total_growthrate,
             "water": np.sum(self.water_layer),
             "overlap": total_overlap,
@@ -915,6 +920,33 @@ class Simulation:
         output_instance.set_data(data)
         output_instance.save()
 
+        # CSV file path (same directory as this script)
+        csv_file_path = os.path.join(os.path.dirname(__file__), 'parameter1.csv')
+
+        # Check if file exists to write headers
+        file_exists = os.path.isfile(csv_file_path)
+
+        # Open the file in append mode
+        with open(csv_file_path, mode='a', newline='') as file:
+            fieldnames = ['date', 'yield', 'growth']
+            writer = csv.DictWriter(file, fieldnames=fieldnames, delimiter=';')
+
+            # Write the header only if the file is newly created
+            if not file_exists:
+                writer.writeheader()
+
+            # Prepare data with the decimal change
+            def format_decimal(value):
+                if isinstance(value, float):
+                    return f"{value:.2f}".replace('.', ',')
+                return value
+
+            # Write data row with formatted decimals
+            writer.writerow({
+                'date': data['date'],
+                'yield': format_decimal(data['yield']),
+                'growth': format_decimal(data['growth'])
+            })
 
 
 

@@ -50,7 +50,34 @@ plants_data = [
         "row_distance": 30,
         "column_distance": 30,
     },
+    {
+        "name": "Buckweed",
+        "W_max": 24.41,
+        "H_max": 30,
+        "k": 0.125,
+        "n": 2.077 ,
+        "b":855,
+        "max_moves": 5,
+        "Yield": 0.8,
+        "size_per_plant": 7068.3,
+        "row_distance": 30,
+        "column_distance": 30,
+    },
+    {
+        "name": "Lactuca Sativa L.",
+        "W_max": 30,
+        "H_max": 40,
+        "k": 0.6,
+        "n": 2.077 ,
+        "b":855,
+        "max_moves": 5,
+        "Yield": 0.8,
+        "size_per_plant": 7068.3,
+        "row_distance": 30,
+        "column_distance": 30,
+    },
 ]
+
 
 # Save the data to the database
 def add_initial_plant_data_to_db():

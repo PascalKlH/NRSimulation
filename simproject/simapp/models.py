@@ -252,6 +252,8 @@ class Plant(models.Model):
     row_distance = models.FloatField()  # Distance between rows
     column_distance = models.FloatField()  # Distance between columns
     test=models.TextField(max_length=100)
+    planting_cost = models.FloatField()
+    revenue = models.FloatField()
 
     def __str__(self):
         return self.name
