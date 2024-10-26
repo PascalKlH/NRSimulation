@@ -471,58 +471,82 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 0);
     }
     
-    // Function to setup the comparison plot
-    function setupComparisonPlot(result) {
-        const yAxisSelect = document.getElementById('y-axis-select');
-        
-        // Initial plot with default value (growth)
-        plotComparison(result, 'growth');
+// Function to setup the comparison plot
+function setupComparisonPlot(result) {
+    const yAxisSelect = document.getElementById('y-axis-select');
     
-        // Listen for changes in the Y-Axis dropdown and update the plot
-        yAxisSelect.addEventListener('change', function () {
-            const selectedValue = this.value;
-            plotComparison(result, selectedValue);
-        });
+    // Initial plot with default value (growth)
+    plotComparison(result, 'growth');
+
+    // Listen for changes in the Y-Axis dropdown and update the plot
+    yAxisSelect.addEventListener('change', function () {
+        const selectedValue = this.value;
+        plotComparison(result, selectedValue);
+    });
+}
+
+function plotComparison(allData, yAxisKey) {
+    if (!allData || allData.length === 0) {
+        console.error("No data available for plotting.");
+        return;
     }
-    
-    function plotComparison(allData, yAxisKey) {
-        if (!allData || allData.length === 0) {
-            console.error("No data available for plotting.");
-            return;
+
+    // Assume each entry in allData has an 'outputs' array with details for each output
+    const xValues = allData.map(entry => entry.param_value); // x-axis based on the parameter values changed in each iteration
+    const xKey = allData[0].param_name;  // Assume the parameter name is the same for all entries
+
+    // Find the last instance of the desired yAxisKey for each iteration's outputs
+    const yValues = allData.map(entry => {
+        const lastOutput = entry.outputs[entry.outputs.length - 1]; // get the last output of each iteration
+        return lastOutput[yAxisKey]; // return the value of the yAxisKey from the last output
+    });
+
+    const trace = {
+        x: xValues,
+        y: yValues,
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: `Comparison of ${yAxisKey}`,
+        line: {
+            color: 'rgb(126,185,48)',
+            width: 3
+        },
+        marker: {
+            color: 'rgb(126,185,48)',
+            size: 8
         }
-    
-        // Assume each entry in allData has an 'outputs' array with details for each output
-        const xValues = allData.map(entry => entry.param_value); // x-axis based on the parameter values changed in each iteration
-        const xKey = allData[0].param_name;  // Assume the parameter name is the same for all entries
+    };
 
-        // Find the last instance of the desired yAxisKey for each iteration's outputs
-        const yValues = allData.map(entry => {
-            const lastOutput = entry.outputs[entry.outputs.length - 1]; // get the last output of each iteration
-            return lastOutput[yAxisKey]; // return the value of the yAxisKey from the last output
-        });
-    
-        const trace = {
-            x: xValues,
-            y: yValues,
-            type: 'scatter',
-            mode: 'lines+markers',
-            name:` Comparison of ${yAxisKey}`
-        };
-    
-        const layout = {
-            title:`Comparison of ${yAxisKey} Across Iterations`,
-            xaxis: { title: xKey },
-            yaxis: { title: yAxisKey.charAt(0).toUpperCase() + yAxisKey.slice(1) }  // Capitalize the Y-axis key
-        };
-    
-        // Plot the comparison chart using Plotly
-        Plotly.newPlot('comparisonPlot', [trace], layout);  
-    }
-    
-        
-    
+    const layout = {
+        title: `Comparison of ${yAxisKey} Across Iterations`,
+        xaxis: {
+            title: xKey,
+            showline: true,
+            showgrid: true,
+            showticklabels: true,
+            linecolor: 'black',
+            linewidth: 2,
+            mirror: true
+        },
+        yaxis: {
+            title: yAxisKey.charAt(0).toUpperCase() + yAxisKey.slice(1),
+            showline: true,
+            showgrid: true,
+            showticklabels: true,
+            linecolor: 'black',
+            linewidth: 2,
+            mirror: true
+        },
+        plot_bgcolor: 'white',
+        paper_bgcolor: 'white',
+        margin: { t: 30, b: 30, l: 80, r: 30 }
+    };
+
+    // Plot the comparison chart using Plotly
+    Plotly.newPlot('comparisonPlot', [trace], layout);
+}
+
     function displayFirstPlot(data, plotId) {
-
         const dates = data.outputs.map(output => output.date);
         const yields = data.outputs.map(output => output.yield);
         const growths = data.outputs.map(output => output.growth);
@@ -531,7 +555,15 @@ document.addEventListener('DOMContentLoaded', function () {
             y: growths,
             type: 'scatter',
             mode: 'lines+markers',
-            name: 'Growthrate'
+            name: 'Growthrate',
+            line: {
+                color: 'rgb(3,98,76)',
+                width: 2
+            },
+            marker: {
+                color: 'rgb(3,98,76)',
+                size: 8
+            }
         };
         const yieldTrace = {
             x: dates,
@@ -539,17 +571,54 @@ document.addEventListener('DOMContentLoaded', function () {
             type: 'scatter',
             mode: 'lines+markers',
             name: 'Yield',
-            yaxis: 'y2'
+            yaxis: 'y2',
+            line: {
+                color: 'rgb(126,185,48)',
+                width: 2
+            },
+            marker: {
+                color: 'rgb(126,185,48)',
+                size: 8
+            }
         };
         const layout1 = {
             title: 'Growthrate and Yield Over Time',
-            xaxis: { title: 'Date' },
-            yaxis: { title: 'Growthrate' },
-            yaxis2: { title: 'Yield', overlaying: 'y', side: 'right' }
+            xaxis: {
+                title: 'Date',
+                showgrid: true, // Show grid lines
+                zeroline: false, // Remove the zero line
+                showline: true, // Show the line at axis base
+                mirror: 'allticks', // Mirror the tick lines on all sides
+                linewidth: 2, // Width of the axis line
+                linecolor: 'black' // Color of the axis line
+            },
+            yaxis: {
+                title: 'Growthrate in (g/TU)',
+                showgrid: true,
+                zeroline: false,
+                showline: true,
+                mirror: 'allticks',
+                linewidth: 2,
+                linecolor: 'black'
+            },
+            yaxis2: {
+                title: 'Yield in (g)',
+                overlaying: 'y',
+                side: 'right',
+                showgrid: true,
+                zeroline: false,
+                showline: true,
+                mirror: 'allticks',
+                linewidth: 2,
+                linecolor: 'black'
+            },
+            plot_bgcolor: 'white', // Set the background color to white
+            margin: {t: 40, r: 40, b: 40, l: 40}, // Adjust margin to ensure all elements fit
+            paper_bgcolor: 'white' // Set the paper background color to white
         };
         Plotly.newPlot(plotId, [growthTrace, yieldTrace], layout1);
-
     }
+    
 
     function displaySecondPlot(data, plotId, plotType) {
         const dates = data.outputs.map(output => output.date);
@@ -563,9 +632,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     y: data.outputs.map(output => output.growth),
                     type: 'scatter',
                     mode: 'lines+markers',
-                    name: 'Growthrate'
+                    name: 'Growthrate in (g/TU)',
+                    line: { color: 'rgb(126,185,48)' }
                 });
-                layout = { title: 'Growth Over Time', xaxis: { title: 'Date' }, yaxis: { title: 'Growthrate' } };
                 break;
             case "yield":
                 traces.push({
@@ -573,9 +642,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     y: data.outputs.map(output => output.yield),
                     type: 'scatter',
                     mode: 'lines+markers',
-                    name: 'Yield'
+                    name: 'Yield in (g)',
+                    line: { color: 'rgb(126,185,48)' }
                 });
-                layout = { title: 'Yield Over Time', xaxis: { title: 'Date' }, yaxis: { title: 'Yield' } };
                 break;
             case "temperature":
                 traces.push({
@@ -583,9 +652,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     y: data.outputs.map(output => output.temperature),
                     type: 'scatter',
                     mode: 'lines+markers',
-                    name: 'Temperature'
+                    name: 'Temperature in (°C)',
+                    line: { color: 'rgb(126,185,48)' }
                 });
-                layout = { title: 'Temperature Over Time', xaxis: { title: 'Date' }, yaxis: { title: 'Temperature' } };
                 break;
             case "water":
                 traces.push({
@@ -593,9 +662,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     y: data.outputs.map(output => output.water),
                     type: 'scatter',
                     mode: 'lines+markers',
-                    name: 'Water'
+                    name: 'Water in (ml)',
+                    line: { color: 'rgb(126,185,48)' }
                 });
-                layout = { title: 'Water Over Time', xaxis: { title: 'Date' }, yaxis: { title: 'Water' } };
                 break;
             case "overlap":
                 traces.push({
@@ -603,9 +672,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     y: data.outputs.map(output => output.overlap),
                     type: 'scatter',
                     mode: 'lines+markers',
-                    name: 'Overlap'
+                    name: 'Overlap in (cm)',
+                    line: { color: 'rgb(126,185,48)' }
                 });
-                layout = { title: 'Overlap Over Time', xaxis: { title: 'Date' }, yaxis: { title: 'Overlap' } };
                 break;
             case "rain":
                 traces.push({
@@ -613,9 +682,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     y: data.outputs.map(output => output.rain),
                     type: 'scatter',
                     mode: 'lines+markers',
-                    name: 'Rain'
+                    name: 'Rain in (mm)',
+                    line: { color: 'rgb(126,185,48)' }
                 });
-                layout = { title: 'Rain Over Time', xaxis: { title: 'Date' }, yaxis: { title: 'Rain' } };
                 break;
             case "time_needed":
                 traces.push({
@@ -623,11 +692,46 @@ document.addEventListener('DOMContentLoaded', function () {
                     y: data.outputs.map(output => output.time_needed),
                     type: 'scatter',
                     mode: 'lines+markers',
-                    name: 'Time Needed'
+                    name: 'Time Needed  in (s)',
+                    line: { color: 'rgb(126,185,48)' }
                 });
-                layout = { title: 'Time Needed Over Time', xaxis: { title: 'Date' }, yaxis: { title: 'Time Needed' } };
                 break;
+                case "revenue":
+                    traces.push({
+                        x: dates,
+                        y: data.outputs.map(output => output.revenue),
+                        type: 'scatter',
+                        mode: 'lines+markers',
+                        name: 'Revenue  in (€)',
+                        line: { color: 'rgb(126,185,48)' }
+                    });
+                    break;
         }
+    
+        layout = {
+            title: `${plotType.charAt(0).toUpperCase() + plotType.slice(1)} Over Time`,
+            xaxis: {
+                title: 'Date',
+                showgrid: true,
+                zeroline: false,
+                showline: true,
+                mirror: 'allticks',
+                linewidth: 2,
+                linecolor: 'black'
+            },
+            yaxis: {
+                title: `${plotType.charAt(0).toUpperCase() + plotType.slice(1)}`,
+                showgrid: true,
+                zeroline: false,
+                showline: true,
+                mirror: 'allticks',
+                linewidth: 2,
+                linecolor: 'black'
+            },
+            plot_bgcolor: 'white',
+            paper_bgcolor: 'white',
+            margin: {t: 40, r: 40, b: 40, l: 40}
+        };
     
         // Clear previous plot
         Plotly.react(plotId, traces, layout);
@@ -637,98 +741,91 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function displayHeatmap(data, plotId) {
         const heatmapData = data.outputs.map(output => output.map);
-        const boundary = data.outputs.map(output => output.boundary);
         const weed = data.outputs.map(output => output.weed);
         const dates = data.outputs.map(output => output.date);
-        const weedArray = weed;
         const slider = document.getElementById('dateSlider');
         const sliderValueDisplay = document.getElementById('sliderValue');
-
+    
         // Initialize slider
-        slider.max = heatmapData.length - 1; // max value is the length of mapArray minus 1
-
+        slider.max = heatmapData.length - 1; // max value is the length of the heatmapData minus 1
+    
         // Event Listener for slider movement
         slider.addEventListener('input', function() {
             const sliderValue = slider.value;
             sliderValueDisplay.textContent = sliderValue;
-            Heatmap(sliderValue,heatmapData,weedArray,dates);
+            Heatmap(sliderValue, heatmapData, weed, dates);
         });
+    
         const showStrips = document.getElementById('showStrips')
         const selectedOption = document.getElementById('heatmapOption');
         showStrips.addEventListener('change', function() {
-            Heatmap(slider.value,heatmapData,weedArray,dates);
-        }
-        );
+            Heatmap(slider.value, heatmapData, weed, dates);
+        });
         selectedOption.addEventListener('change', function() {
-            Heatmap(slider.value,heatmapData,weedArray,dates);
-        }
-        );
+            Heatmap(slider.value, heatmapData, weed, dates);
+        });
+    
         // Function to display the corresponding Heatmap data
-        function Heatmap(index,map,weed,dates) {
-            const mapData =map[index];  // Access the data for the heatmap at the given index
+        function Heatmap(index, map, weed, dates) {
+            const mapData = map[index];  // Access the data for the heatmap at the given index
             const weedData = weed[index];
             const showStrips = document.getElementById('showStrips').checked;
             const selectedOption = document.getElementById('heatmapOption').value;
-
     
             if (mapData) {
                 // Heatmap data trace
                 const heatmapTrace = {
-                    z: mapData,  // mapData contains the 2D array for the heatmap
+                    z: mapData,
                     type: 'heatmap',
                     colorscale: [
                         [0,    'rgb(100,50,0)'],  // Brown for all values = 0
-                        [0.01, 'rgb(150,255,150)'],  // Light green for smaller values
+                        [0.01, 'rgb(126,185,48)'],  // Light green for smaller values
                         [1,    'rgb(0,100,0)']  // Dark green for higher values up to 50
                     ],
                     colorbar: {
-                        title: 'Value',
+                        title: 'Plant Density',
                         titleside: 'right'
                     }
                 };
-        
+    
                 // Weed data trace with opacity
                 const weedTrace = {
                     z: weedData,
                     type: 'heatmap',
-                    colorscale: [
-                        [0,    'rgb(100,50,0)'],  // Brown for all values = 0
-                        [0.01, 'rgb(255,150,150)'],  // Light green for smaller values
-                        [1,    'rgb(100,0,0)']  // Dark green for higher values up to 50
-
-                    ],
+                    colorscale: 'Hot', // Using a 'Hot' colorscale for differentiation
                     colorbar: {
                         title: 'Weed Presence',
-                        titleside: 'left',  // Move the colorbar to the left side
-                        x: -0.15,  // Adjust the x position to make sure it is properly placed on the left
+                        titleside: 'left', // Move the colorbar to the left side
+                        x: -0.15, // Adjust the x position
                     },
-                    opacity: 0.5  // Adjust opacity so that both layers are visible
+                    opacity: 0.5 // Semi-transparent to view overlay with plant data
                 };
-                
-                //const stripTrace = {
-                //    z: rowArray2D,
-                //    type: 'heatmap',
-                //    colorscale: [
-                //        [0, 'rgb(200,200,200)'],
-                //        [1, 'rgb(150,150,150)']
-                //    ],
-                //    showscale: false,
-                //    opacity: 0.3
-               // };
-                
+    
                 const layout = {
-                    title:" Heatmap on ${dates[index]}",
+                    title: `Heatmap on ${dates[index]}`,
                     xaxis: {
                         title: 'X Axis',
                         showgrid: false,
+                        zeroline: false,
+                        showline: true,
+                        mirror: 'allticks',
+                        linewidth: 2,
+                        linecolor: 'black'
                     },
                     yaxis: {
                         title: 'Y Axis',
                         showgrid: false,
+                        zeroline: false,
+                        showline: true,
+                        mirror: 'allticks',
+                        linewidth: 2,
+                        linecolor: 'black'
                     },
                     margin: { t: 40, r: 20, b: 40, l: 50 },
+                    plot_bgcolor: 'white',
+                    paper_bgcolor: 'white'
                 };
-                
+    
                 let traces = [];
                 if (selectedOption === 'plants') {
                     traces.push(heatmapTrace);
@@ -737,22 +834,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else if (selectedOption === 'plantsweeds') {
                     traces.push(heatmapTrace, weedTrace);
                 }
-
+    
+                // If strips are to be shown, they can be added here as additional trace
                 if (showStrips) {
-                    pass
-                    //traces.push(stripTrace);  // Add the strip trace if the checkbox is checked
+                    // Define and add stripTrace
                 }
-
+    
                 Plotly.newPlot(plotId, traces, layout);
             } else {
-                console.error("No data found for index ${index}.");
+                console.error(`No data found for index ${index}.`);
             }
         }
-
+    
         // Display the initial heatmap
-        Heatmap(1,heatmapData,weedArray,dates);
-
-        }
+        Heatmap(0, heatmapData, weed, dates); // Updated to start at the first index
+    }
     
     },);
 });

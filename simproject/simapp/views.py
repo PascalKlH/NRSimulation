@@ -27,11 +27,10 @@ def run_simulation(request):
     if DataModelInput.objects.filter(simName=simulation_name).exists():
         print("Simulation name already exists. Please choose a different name.")
         messages.error(request, 'Simulation name already exists. Please choose a different name.')
-        return redirect('index')  # Redirect to the main page or the form page
+        return redirect('index')  
 
     try:
         data = json.loads(request.body.decode('utf-8'))  # Ensure this is where you intend to get your data
-        # Assume that `main(data)` runs your simulation and does not return a value
         # Insert code to add weather and plant data if not present
         if Weather.objects.count() == 0:
             add_initial_weather_data_to_db()

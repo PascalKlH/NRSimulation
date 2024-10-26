@@ -167,17 +167,15 @@ class Crop:
         r = self.parameters["k"]
         m = self.parameters["n"]
         '''
-        h = 30  # This could represent the asymptotic maximum size or similar scale factor
+        h = 32 # This could represent the asymptotic maximum size or similar scale factor
         r = 0.0125 # This could represent the growth rate or similar factor
         m = 2.077# This could represent the curvature or similar factor
         x = t_diff_hours
-        b= 35.625
+        b= 35.625 # This could represent the initial size or similar factor
         growth_rate=(h*b*r)/(m-1)*np.exp(-r*x)*(1+b*np.exp(-r*x))**(m/(1-m))
         #get the betrag of the growth rate
         growth_rate = abs(growth_rate*self.sim.stepsize*(1-self.overlap))
-        #size =  h * (1 + b * np.exp(-r * x))**(1 / (1 - m))
-        #growth_rate = size -self.size
-        #self.size = size
+
         # Update previous growth and modify the water layer based on the new growth
         self.previous_growth = growth_rate
         self.sim.water_layer[self.center] -= 0.1 * growth_rate
@@ -258,7 +256,7 @@ class Crop:
             # Calculate total and relative overlap
             total_overlap = np.sum(mask > 1)
             relative_overlap = total_overlap / np.sum(boundary_slice) if np.sum(boundary_slice) > 0 else 0
-            self.overlap = relative_overlap
+            self.overlap = relative_overlap*0.7
             if self.moves < self.parameters["max_moves"]:
                 pass
                 #self.move_plant(mask,size_layer,obj_layer,pos_layer)
@@ -555,7 +553,7 @@ class Strip:
         row_length = strip_parameters["rowLength"]  # Length of the row
 
         # Calculate offsets
-        offset = plant_distance // 2
+        offset = 40 // 2
 
         # Adjust indices to ensure plants are not on the edges
         row_start = offset
@@ -565,7 +563,7 @@ class Strip:
 
         # Generate grid indices with adjusted bounds
         row_indices = np.arange(row_start, row_end, plant_distance)
-        col_indices = np.arange(col_start, col_end, plant_distance)
+        col_indices = np.arange(col_start, col_end, 40)
 
         # Pass row and column indices in the correct order
         self.apply_planting(row_indices, col_indices, plant_parameters, sim)
@@ -900,6 +898,7 @@ class Simulation:
             self.current_date += timedelta(hours=self.stepsize)
             #for strip in self.strips:
              #   strip.harvesting(self)
+        print("Simulation finished.")
 
 
 
@@ -965,8 +964,10 @@ def main(input_data):
     weather_data = fetch_weather_data()
 
     if input_data["testingMode"]:
+        print("Running simulation in testing mode.")
         handle_testing_mode(input_data, input_instance, weather_data)
     else:
+        print("Running standard simulation.")
         run_standard_simulation(input_data, input_instance, weather_data)
     #return the simulation name
     return input_instance.simName
@@ -1073,7 +1074,10 @@ def handle_parameter_variations(input_data, input_instance, weather_data):
     Processes parameter variations for testing mode.
     """
     testing_key, testing_value = next(iter(input_data["testingData"].items()))
-    start_value, end_value = sorted([input_data.get(testing_key, input_data["rows"][0][testing_key]), testing_value])
+    if testing_key  in input_data["rows"][0]:
+        start_value, end_value = sorted([input_data.get(testing_key, input_data["rows"][0][testing_key]), testing_value])
+    else:
+        start_value, end_value = sorted([input_data.get(testing_key, -99), testing_value])
     
     for param_value in range(start_value, end_value + 1):
         modified_input_data = modify_input_data_for_parameter(input_data, testing_key, param_value)
@@ -1084,6 +1088,7 @@ def run_standard_simulation(input_data, input_instance, weather_data):
     """
     Runs a standard simulation when not in testing mode.
     """
+
     iteration_instance = create_iteration_instance(input_instance, index=1, param_value=-99)
     run_simulation(input_data, weather_data, iteration_instance)
 
