@@ -365,8 +365,8 @@ document.addEventListener('DOMContentLoaded', function () {
         .catch(error => {
             console.error('Error:', error);
         });
-        function fetchSimulationData(simulationName) {
-            fetch(`/api/get_simulation_data/?name=${encodeURIComponent(simulationName)}`)
+        function fetchSimulationData(simulationName, page = 1, pageSize = 2000) {
+            fetch(`/api/get_simulation_data/?name=${encodeURIComponent(simulationName)}&page=${page}&page_size=${pageSize}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Network response was not ok');
@@ -374,11 +374,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     return response.json();
                 })
                 .then(data => {
-                    // Now you can use this data to plot graphs
-                    setupCarousel(data);
-                    setupComparisonPlot(data);
-                    console.log(data);
-
+                    console.log(data.iterations);
+                    setupCarousel(data.iterations);
+                    setupComparisonPlot(data.iterations);
+        
+                    // If there is a next page, fetch it recursively
+                    if (data.has_next) {
+                        fetchSimulationData(simulationName, page + 1, pageSize);
+                    }
                 })
                 .catch(error => {
                     console.error('Failed to fetch:', error);
@@ -491,14 +494,28 @@ function plotComparison(allData, yAxisKey) {
         return;
     }
 
-    // Assume each entry in allData has an 'outputs' array with details for each output
-    const xValues = allData.map(entry => entry.param_value); // x-axis based on the parameter values changed in each iteration
-    const xKey = allData[0].param_name;  // Assume the parameter name is the same for all entries
+    const xValues = allData.map(entry => entry.param_value); // x-axis based on the parameter values
+    const xKey = allData[0].param_name; // Assume the parameter name is the same for all entries
 
-    // Find the last instance of the desired yAxisKey for each iteration's outputs
     const yValues = allData.map(entry => {
-        const lastOutput = entry.outputs[entry.outputs.length - 1]; // get the last output of each iteration
-        return lastOutput[yAxisKey]; // return the value of the yAxisKey from the last output
+        const lastOutput = entry.outputs[entry.outputs.length - 1]; // Get the last output of each iteration
+        const area = lastOutput.map[0].length * lastOutput.map.length;
+        switch (yAxisKey) {
+            case "profit_per_plant":
+                return lastOutput.profit / lastOutput.num_plants;
+            case "profit_per_area":
+                return lastOutput.profit / area;
+            case "yield_per_plant":
+                return lastOutput.yield / lastOutput.num_plants;
+            case "growth_per_plant":
+                return lastOutput.growth / lastOutput.num_plants;
+            case "yield_per_area":
+                return lastOutput.yield / area;
+            case "growth_per_area":
+                return lastOutput.growth / area;
+            default:
+                return lastOutput[yAxisKey]; // For other keys like yield, growth, etc.
+        }
     });
 
     const trace = {
@@ -506,7 +523,7 @@ function plotComparison(allData, yAxisKey) {
         y: yValues,
         type: 'scatter',
         mode: 'lines+markers',
-        name: `Comparison of ${yAxisKey}`,
+        name: `Comparison of ${yAxisKey.replace('_', ' ')}`,
         line: {
             color: 'rgb(126,185,48)',
             width: 3
@@ -518,7 +535,7 @@ function plotComparison(allData, yAxisKey) {
     };
 
     const layout = {
-        title: `Comparison of ${yAxisKey} Across Iterations`,
+        title: `Comparison of ${yAxisKey.replace('_', ' ')} Across Iterations`,
         xaxis: {
             title: xKey,
             showline: true,
@@ -529,7 +546,7 @@ function plotComparison(allData, yAxisKey) {
             mirror: true
         },
         yaxis: {
-            title: yAxisKey.charAt(0).toUpperCase() + yAxisKey.slice(1),
+            title: yAxisKey.charAt(0).toUpperCase() + yAxisKey.slice(1).replace('_', ' '),
             showline: true,
             showgrid: true,
             showticklabels: true,
@@ -622,9 +639,11 @@ function plotComparison(allData, yAxisKey) {
 
     function displaySecondPlot(data, plotId, plotType) {
         const dates = data.outputs.map(output => output.date);
+        const map = data.outputs.map(output => output.map); 
+        const area = map[0].length * map[0][0].length;
         let traces = [];
         let layout;
-    
+        
         switch (plotType) {
             case "growth":
                 traces.push({
@@ -643,6 +662,46 @@ function plotComparison(allData, yAxisKey) {
                     type: 'scatter',
                     mode: 'lines+markers',
                     name: 'Yield in (g)',
+                    line: { color: 'rgb(126,185,48)' }
+                });
+                break;
+            case "growth_per_plant":
+                traces.push({
+                    x: dates,
+                    y: data.outputs.map(output => output.growth / output.num_plants),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Growth per Plant (g/TU)',
+                    line: { color: 'rgb(126,185,48)' }
+                });
+                break;
+            case "yield_per_plant":
+                traces.push({
+                    x: dates,
+                    y: data.outputs.map(output => output.yield / output.num_plants),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Yield per Plant (g)',
+                    line: { color: 'rgb(126,185,48)' }
+                });
+                break;
+            case "growth_per_area":
+                traces.push({
+                    x: dates,
+                    y: data.outputs.map(output => output.growth / area),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Growth per Area (g/m²)',
+                    line: { color: 'rgb(126,185,48)' }
+                });
+                break;
+            case "yield_per_area":
+                traces.push({
+                    x: dates,
+                    y: data.outputs.map(output => output.yield / area),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'Yield per Area (g/m²)',
                     line: { color: 'rgb(126,185,48)' }
                 });
                 break;
@@ -692,24 +751,24 @@ function plotComparison(allData, yAxisKey) {
                     y: data.outputs.map(output => output.time_needed),
                     type: 'scatter',
                     mode: 'lines+markers',
-                    name: 'Time Needed  in (s)',
+                    name: 'Time Needed in (s)',
                     line: { color: 'rgb(126,185,48)' }
                 });
                 break;
-                case "revenue":
-                    traces.push({
-                        x: dates,
-                        y: data.outputs.map(output => output.revenue),
-                        type: 'scatter',
-                        mode: 'lines+markers',
-                        name: 'Revenue  in (€)',
-                        line: { color: 'rgb(126,185,48)' }
-                    });
-                    break;
+            case "profit":
+                traces.push({
+                    x: dates,
+                    y: data.outputs.map(output => output.profit),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: 'profit in (€)',
+                    line: { color: 'rgb(126,185,48)' }
+                });
+                break;
         }
     
         layout = {
-            title: `${plotType.charAt(0).toUpperCase() + plotType.slice(1)} Over Time`,
+            title: `${plotType.charAt(0).toUpperCase() + plotType.slice(1).replace('_', ' ')} Over Time`,
             xaxis: {
                 title: 'Date',
                 showgrid: true,
@@ -720,7 +779,7 @@ function plotComparison(allData, yAxisKey) {
                 linecolor: 'black'
             },
             yaxis: {
-                title: `${plotType.charAt(0).toUpperCase() + plotType.slice(1)}`,
+                title: `${plotType.charAt(0).toUpperCase() + plotType.slice(1).replace('_', ' ')}`,
                 showgrid: true,
                 zeroline: false,
                 showline: true,
@@ -736,6 +795,7 @@ function plotComparison(allData, yAxisKey) {
         // Clear previous plot
         Plotly.react(plotId, traces, layout);
     }
+    
     
     
 

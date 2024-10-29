@@ -87,7 +87,7 @@ class Crop:
             dtype=bool,
         )
         self.moves = 0  # Number of moves
-        self.overlap = 0  # Overlap with other plants
+        self.overlap = 1  # Overlap with other plants
         self.previous_growth = 0  # Growth rate of the previous hour
 
     def grow(self, size_layer, obj_layer, pos_layer, strip):
@@ -168,14 +168,20 @@ class Crop:
         m = self.parameters["n"]
         '''
         h = 32 # This could represent the asymptotic maximum size or similar scale factor
-        r = 0.0125 # This could represent the growth rate or similar factor
+        r = 0.0095#/self.sim.stepsize # This could represent the growth rate or similar factor
         m = 2.077# This could represent the curvature or similar factor
         x = t_diff_hours
-        b= 35.625 # This could represent the initial size or similar factor
+        b= 35#855/self.sim.stepsize # This could represent the initial size or similar factor
         growth_rate=(h*b*r)/(m-1)*np.exp(-r*x)*(1+b*np.exp(-r*x))**(m/(1-m))
         #get the betrag of the growth rate
-        growth_rate = abs(growth_rate*self.sim.stepsize*(1-self.overlap))
-
+        growth_rate = abs(growth_rate*self.sim.stepsize)*self.overlap
+        """
+        h = 35 # This could represent the asymptotic maximum size or similar scale factor
+        r = 0.095/self.sim.stepsize # This could represent the growth rate or similar factor
+        m = 2.477# This could represent the curvature or similar factor
+        x = t_diff_hoursf
+        b= 180 # This could represent the initial size or similar factor
+        """
         # Update previous growth and modify the water layer based on the new growth
         self.previous_growth = growth_rate
         self.sim.water_layer[self.center] -= 0.1 * growth_rate
@@ -255,13 +261,14 @@ class Crop:
         if np.any(mask > 1):
             # Calculate total and relative overlap
             total_overlap = np.sum(mask > 1)
-            relative_overlap = total_overlap / np.sum(boundary_slice) if np.sum(boundary_slice) > 0 else 0
-            self.overlap = relative_overlap*0.7
+            relative_overlap = total_overlap / np.sum(self.boundary) if np.sum(self.boundary) > 0 else 0
+            maxoverlap = 0.07
+            self.overlap = max(0, min(1, 1 - (relative_overlap / maxoverlap)))
             if self.moves < self.parameters["max_moves"]:
                 pass
                 #self.move_plant(mask,size_layer,obj_layer,pos_layer)
         else:
-            self.overlap = 0  # Reset overlap if no interference
+            self.overlap = 1  # Reset overlap if no interference
 
     def move_plant(self, mask, size_layer, obj_layer, pos_layer):
 
@@ -463,7 +470,7 @@ class Strip:
         self.sim = sim
         # Tracking previous sizes for the stability check (initiate with None)
         self.previous_sizes = [None] * 5  # List to track the last 5 size changes
-
+        self.plant_parameters = Strip.get_plant_parameters(self.plantType)
     def get_plant_parameters(plant_name):
         try:
             plant = Plant.objects.get(name=plant_name)
@@ -479,7 +486,7 @@ class Strip:
                 "size_per_plant": float(plant.size_per_plant),
                 "row-distance": int(plant.row_distance),
                 "column-distance": int(plant.column_distance),
-                "planting-cost": float(plant.planting_cost),
+                "planting_cost": float(plant.planting_cost),
                 "revenue": float(plant.revenue),
             }
         except Plant.DoesNotExist:
@@ -487,7 +494,6 @@ class Strip:
             return None
 
     def planting(self, sim):
-        plant_parameters = Strip.get_plant_parameters(self.plantType)
         strip_parameters = {
             "rowLength": sim.input_data["rowLength"],
             "rowDistance": self.rowSpacing,
@@ -498,7 +504,7 @@ class Strip:
                 strip_parameters,
                 self.start,
                 self.start + self.width,
-                plant_parameters,
+                self.plant_parameters,
                 sim,
             )
         elif self.plantingType == "alternating":
@@ -507,7 +513,7 @@ class Strip:
                 self.start,
                 self.start + self.width,
                 self.index,
-                plant_parameters,
+                self.plant_parameters,
                 sim,
             )
         elif self.plantingType == "random":
@@ -516,7 +522,7 @@ class Strip:
                 self.start,
                 self.start + self.width,
                 self.index,
-                plant_parameters,
+                self.plant_parameters,
                 sim,
             )
         else:
@@ -891,25 +897,28 @@ class Simulation:
                     self.grow_weeds(strip)          
             end_time = time.time()
             time_needed = end_time - start_time
-            index_where = np.where(self.crops_pos_layer > 0)  
-            yields = np.sum(self.crop_size_layer[index_where])*11
-            profit = yields * self.crops_obj_layer[index_where[0][0],index_where[1][0]].parameters["revenue"]
-            self.record_data(time_needed,iteration_instance,total_growthrate,total_overlap,yields,profit)
+            self.record_data(time_needed,iteration_instance,total_growthrate,total_overlap,)
             self.current_date += timedelta(hours=self.stepsize)
+
             #for strip in self.strips:
-             #   strip.harvesting(self)
+            #   strip.harvesting(self)
         print("Simulation finished.")
 
 
 
-    def record_data(self,time_needed,iteration_instance,total_growthrate,total_overlap,yields,profit):
+    def record_data(self,time_needed,iteration_instance,total_growthrate,total_overlap):
+        index_where = np.where(self.crops_pos_layer > 0)  
+        yields = np.sum(self.crop_size_layer[index_where])*11
+        num_plants = np.sum(self.crops_pos_layer)
+        profit = yields *self.strips[0].plant_parameters["revenue"]*0.001-0.05*self.strips[0].num_plants
+        #self.strips[0].plant_parameters["planting_cost"]
         data = {
 
             "date": self.current_date,
             "yield": yields,
             "growth": total_growthrate,
             "water": np.sum(self.water_layer),
-            "overlap": total_overlap,
+            "overlap": num_plants-total_overlap,
             "map": self.crop_size_layer.tolist(),
             "boundary": self.boundary_layer.tolist(),
             "weed": self.weeds_size_layer.tolist(),
@@ -917,6 +926,8 @@ class Simulation:
             "profit": profit,
             "temperature": self.weather_data[self.current_date]["temperature"],
             "rain": self.weather_data[self.current_date]["rain"],
+            "num_plants": num_plants,
+
         }
         output_instance = DataModelOutput(
             iteration=iteration_instance
@@ -925,7 +936,7 @@ class Simulation:
         output_instance.save()
 
         # CSV file path (same directory as this script)
-        csv_file_path = os.path.join(os.path.dirname(__file__), 'parameter1.csv')
+        csv_file_path = os.path.join(os.path.dirname(__file__), 'r130.csv')
 
         # Check if file exists to write headers
         file_exists = os.path.isfile(csv_file_path)

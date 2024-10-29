@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.urls import reverse
 from django.shortcuts import get_object_or_404
 from .forms import PlantForm
-
+from django.core.paginator import Paginator
 
 
 
@@ -44,50 +44,59 @@ def run_simulation(request):
     except json.JSONDecodeError:
         return HttpResponseBadRequest("Invalid JSON format")
 
-
-
-
-
-
 def get_simulation_data(request):
     simulation_name = request.GET.get('name', None)
+    page = int(request.GET.get('page', 1))
+    page_size = int(request.GET.get('page_size', 2000))
+
     if not simulation_name:
         return JsonResponse({'error': 'No simulation name provided'}, status=400)
-    
+
     try:
-        # Fetch all iterations linked to the specified simulation name via the input relationship
-        iterations = SimulationIteration.objects.filter(input__simName=simulation_name)
+        # Fetch all iterations linked to the specified simulation name and order by iteration_index
+        iterations = SimulationIteration.objects.filter(input__simName=simulation_name).order_by('iteration_index')
+
+        paginator = Paginator(iterations, page_size)
+        page_obj = paginator.get_page(page)
 
         data_by_iteration = []
-        for iteration in iterations:
-            # Fetch outputs for each iteration
+        for iteration in page_obj:
             outputs = DataModelOutput.objects.filter(iteration=iteration).order_by('date')
             iteration_data = {
                 "iteration_index": iteration.iteration_index,
                 "param_value": iteration.param_value,
-                "outputs": []
-            }
+                "outputs": [
+                    {
+                        "date": output.date,
+                        "yield": output.yield_value,
+                        "growth": output.growth,
+                        "water": output.water,
+                        "overlap": output.overlap,
+                        "map": output.map,
+                        "weed": output.weed,
+                        "time_needed": output.time_needed,
+                        "profit": output.profit,
+                        "rain": output.rain,
+                        "temperature": output.temperature,
+                        "num_plants": output.num_plants,
 
-            for output in outputs:
-                output_data = {
-                    "date": output.date,
-                    "yield": output.yield_value,
-                    "growth": output.growth,
-                    "water": output.water,
-                    "overlap": output.overlap,
-                    "map": output.map,
-                    "weed": output.weed,
-                    "time_needed": output.time_needed,
-                    "profit": output.profit,
-                    "rain": output.rain,
-                    "temperature": output.temperature
-                }
-                iteration_data["outputs"].append(output_data)
+                    }
+                    for output in outputs
+                ]
+            }
             data_by_iteration.append(iteration_data)
 
-        return JsonResponse(data_by_iteration, safe=False)
+        response_data = {
+            'iterations': data_by_iteration,
+            'has_next': page_obj.has_next(),
+            'total_pages': paginator.num_pages,
+            'current_page': page_obj.number
+        }
+
+        return JsonResponse(response_data)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
 
 def plant_list(request):
     plants = Plant.objects.all()

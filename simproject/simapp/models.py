@@ -187,6 +187,7 @@ class DataModelOutput(models.Model):
     profit = models.FloatField()
     rain = models.FloatField()
     temperature = models.FloatField()
+    num_plants = models.IntegerField()
     def set_data(self, data):
         """
         Set the output data for this iteration.
@@ -202,6 +203,7 @@ class DataModelOutput(models.Model):
         self.profit = data.get('profit')
         self.rain = data.get('rain')
         self.temperature = data.get('temperature')
+        self.num_plants = data.get('num_plants')
 
 
         
@@ -221,7 +223,8 @@ class DataModelOutput(models.Model):
             'time_needed': self.time_needed,
             'profit': self.profit,
             'rain': self.rain,
-            'temperature': self.temperature
+            'temperature': self.temperature,
+            'num_plants': self.num_plants,
         }
 
 class Plant(models.Model):

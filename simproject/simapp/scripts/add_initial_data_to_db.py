@@ -80,18 +80,18 @@ plants_data = [
     },
     {
         "name": "Lactuca Sativa L.",
-        "W_max": 30,
-        "H_max": 40,
-        "k": 0.6,
-        "n": 2.077 ,
-        "b":855,
+        "W_max": 35,
+        "H_max": 35,
+        "k": 0.095,
+        "n": 2.477 ,
+        "b":180,
         "max_moves": 5,
         "Yield": 0.8,
         "size_per_plant": 7068.3,
         "row_distance": 30,
         "column_distance": 30,
-        "planting_cost": 0.5,
-        "revenue": 1.5
+        "planting_cost": 0.05,#  €/plant
+        "revenue": 100   #   €/100 kg
     },
 ]
 
