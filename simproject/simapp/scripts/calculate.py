@@ -151,7 +151,7 @@ class Crop:
         current_time = self.sim.current_date
 
         t_diff_hours = ((current_time - strip.sowing_date).total_seconds() / 3600)
-        t_diff_hours = t_diff_hours-500
+        t_diff_hours = t_diff_hours
         # Calculate environmental impact factors on growth
         water_factor = self.calculate_waterfactor()
         temp_factor = self.calculate_tempfactor()
@@ -167,20 +167,22 @@ class Crop:
         r = self.parameters["k"]
         m = self.parameters["n"]
         '''
-        h = 32 # This could represent the asymptotic maximum size or similar scale factor
-        r = 0.0095#/self.sim.stepsize # This could represent the growth rate or similar factor
-        m = 2.477# This could represent the curvature or similar factor
+        #diese werte fur den Versuch
+        h = 32
+        r = 0.0045
+        m = 1.421
         x = t_diff_hours
-        b= 10#855/self.sim.stepsize # This could represent the initial size or similar factor
+        b= 9
         growth_rate=(h*b*r)/(m-1)*np.exp(-r*x)*(1+b*np.exp(-r*x))**(m/(1-m))
         #get the betrag of the growth rate
         growth_rate = abs(growth_rate*self.sim.stepsize)*self.overlap
         """
-        h = 35 # This could represent the asymptotic maximum size or similar scale factor
-        r = 0.095/self.sim.stepsize # This could represent the growth rate or similar factor
-        m = 2.477# This could represent the curvature or similar factor
-        x = t_diff_hoursf
-        b= 180 # This could represent the initial size or similar factor
+        diese Werte dinf bei der Parameterisierung des Modells entstanden
+        h = 32
+        r = 0.0022
+        m = 1.421
+        x = t_diff_hours
+        b= 11.8
         """
         # Update previous growth and modify the water layer based on the new growth
         self.previous_growth = growth_rate
@@ -512,7 +514,6 @@ class Strip:
                 strip_parameters,
                 self.start,
                 self.start + self.width,
-                self.index,
                 self.plant_parameters,
                 sim,
             )
@@ -521,7 +522,6 @@ class Strip:
                 strip_parameters,
                 self.start,
                 self.start + self.width,
-                self.index,
                 self.plant_parameters,
                 sim,
             )
@@ -579,53 +579,87 @@ class Strip:
     def _empty_planting():
         pass
 
-    def _alternating_planting(self,strip_parameters, start_col, end_col, plant_parameters, sim
-):
+    def _alternating_planting(self, strip_parameters, start_col, end_col, plant_parameters, sim):
         """
-        Plant the crops in an alternating pattern
+        Plant the crops in an alternating pattern, avoiding edges
         """
-        row_distance = strip_parameters["rowDistance"]
-        column_distance = strip_parameters["columnDistance"]
+        plant_distance = strip_parameters["rowDistance"]
         row_length = strip_parameters["rowLength"]
 
-        half_row_dist = row_distance // 3
+        # Use half the plant distance as offset to avoid planting at the edges
+        offset = plant_distance // 2
+        row_start = offset
+        row_end = row_length - offset
+        col_start = start_col + offset
+        col_end = end_col - offset
+
         # Create grid indices for odd and even rows
-        row_indices = np.arange(half_row_dist, row_length, row_distance)
-        col_indices_odd = np.arange(start_col, end_col, column_distance)
-        col_indices_even = col_indices_odd + column_distance // 2
+        row_indices = np.arange(row_start, row_end, plant_distance)
+        col_indices_odd = np.arange(col_start, col_end, plant_distance)
+        col_indices_even = col_indices_odd + plant_distance // 2
 
         # Clip the indices to stay within bounds
-        col_indices_even = col_indices_even[col_indices_even < end_col]
+        col_indices_even = col_indices_even[col_indices_even < col_end]
+        col_indices_odd = col_indices_odd[col_indices_odd < col_end]
 
         # Create masks for alternating rows
         row_grid_odd = row_indices[::2]
         row_grid_even = row_indices[1::2]
 
+
+
         # Apply planting to odd and even rows
-        self.apply_planting(col_indices_odd, row_grid_odd, plant_parameters, sim)
-        self.apply_planting(col_indices_even, row_grid_even, plant_parameters, sim)
+        self.apply_planting(row_grid_odd, col_indices_odd, plant_parameters, sim)
+        self.apply_planting(row_grid_even, col_indices_even, plant_parameters, sim)
+
 
     def _random_planting(self,strip_parameters, start_col, end_col, plant_parameters, sim):
         """
         Plant the crops in a random pattern
         """
         num_plants = int(
-            strip_parameters["columnDistance"]
-            * strip_parameters["rowLength"]
-            / strip_parameters["rowDistance"]
-        )
-        total_positions = strip_parameters["rowLength"] * (end_col - start_col)
+            (strip_parameters["rowLength"] * (end_col - start_col) )/(strip_parameters["rowDistance"]*40)
 
-        # Randomly select positions within the strip
+        )
+        offset = 40 // 2
+        row_start = offset
+        row_end = strip_parameters["rowLength"] - offset
+        col_start = start_col + offset
+        col_end = end_col - offset
+        print(num_plants)
+        # Calculate the adjusted grid dimensions based on offsets
+        adjusted_row_length = row_end - row_start
+        adjusted_col_length = col_end - col_start
+
+        # Determine the number of plants to place
+        print(f"Placing {num_plants} plants in strip {self.index}.")
+        # Randomly select positions within the adjusted bounds
+        total_positions = adjusted_row_length * adjusted_col_length
         plant_positions = np.random.choice(total_positions, num_plants, replace=False)
         row_indices, col_indices = np.unravel_index(
-            plant_positions, (strip_parameters["rowLength"], end_col - start_col)
+            plant_positions, (adjusted_row_length, adjusted_col_length)
         )
-        col_indices += (
-            start_col  # Adjust column indices based on the strip's starting position
-        )
+        row_indices, col_indices = np.unravel_index(
+                plant_positions, (adjusted_row_length, adjusted_col_length)
+            )
+        row_indices += row_start
+        col_indices += col_start
+        print
+        # Set crop positions to True in your crop position layer
+        sim.crops_pos_layer[row_indices, col_indices] = True
 
-        self.apply_planting(col_indices, row_indices, plant_parameters, sim)
+        # Create crop objects using vectorize properly over the grid
+        create_crop = np.vectorize(lambda r, c: Crop(self.plantType, (r, c), plant_parameters, sim))
+        crops = create_crop(row_indices, col_indices)
+
+        # Place crop objects in the crops_obj_layer
+        sim.crops_obj_layer[row_indices, col_indices] = crops
+
+        # Set initial sizes in the crop_size_layer
+        sim.crop_size_layer[row_indices, col_indices] = 0.001
+
+        # Count the number of plants actually planted
+        self.num_plants = np.size(row_indices)
 
     def harvesting(self, sim):
         # startr harvesting 10 days after planting
@@ -900,15 +934,15 @@ class Simulation:
             self.record_data(time_needed,iteration_instance,total_growthrate,total_overlap,)
             self.current_date += timedelta(hours=self.stepsize)
 
-            #for strip in self.strips:
-            #   strip.harvesting(self)
+         #   for strip in self.strips:
+          #    strip.harvesting(self)
         print("Simulation finished.")
 
 
 
     def record_data(self,time_needed,iteration_instance,total_growthrate,total_overlap):
         index_where = np.where(self.crops_pos_layer > 0)  
-        yields = np.sum(self.crop_size_layer[index_where])#*11
+        yields = np.sum(self.crop_size_layer[index_where])*11
         num_plants = np.sum(self.crops_pos_layer)
         profit = yields *self.strips[0].plant_parameters["revenue"]*0.001-0.05*self.strips[0].num_plants
         #self.strips[0].plant_parameters["planting_cost"]
@@ -934,8 +968,9 @@ class Simulation:
         )
         output_instance.set_data(data)
         output_instance.save()
+        """
         # CSV file path (same directory as this script)
-        csv_file_path = os.path.join(os.path.dirname(__file__), 'tets.csv')
+        csv_file_path = os.path.join(os.path.dirname(__file__), '6.csv')
 
         # Check if file exists to write headers
         file_exists = os.path.isfile(csv_file_path)
@@ -961,7 +996,7 @@ class Simulation:
                 'yield': format_decimal(data['yield']),
                 'growth': format_decimal(data['growth'])
             })
-
+            """
 
 
 

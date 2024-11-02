@@ -520,6 +520,20 @@ function plotComparison(allData, yAxisKey) {
     const xValues = allData.map(entry => entry.param_value); // x-axis based on the parameter values
     const xKey = allData[0].param_name; // Assume the parameter name is the same for all entries
 
+    // Define full titles with units for each yAxisKey
+    const titles = {
+        "profit_per_plant": "Profit per Plant (€ / Plant)",
+        "profit_per_area": "Profit per Area (€ / m²)",
+        "yield_per_plant": "Yield per Plant (g / Plant)",
+        "growth_per_plant": "Average Growth-rate per Plant (g/TU per Plant)",
+        "yield_per_area": "Yield per Area (g per m²)",
+        "growth_per_area": "Growth per Area (g/TU per m²)",
+        "number_of_plants": "Number of Plants (n)",
+        "growth": "Average Growth-rate (g/TU)",
+        "yield": "Total yield (g)",
+        "profit": " Total profit (€)"
+    };
+
     const yValues = allData.map(entry => {
         const lastOutput = entry.outputs[entry.outputs.length - 1]; // Get the last output of each iteration
         const area = lastOutput.map[0].length * lastOutput.map.length;
@@ -527,23 +541,23 @@ function plotComparison(allData, yAxisKey) {
             case "profit_per_plant":
                 return lastOutput.profit / lastOutput.num_plants;
             case "profit_per_area":
-                return lastOutput.profit / area;
+                return lastOutput.profit / area*10000;
             case "yield_per_plant":
                 return lastOutput.yield / lastOutput.num_plants;
             case "growth_per_plant":
                 const meanGrowthPerPlant = entry.outputs.reduce((sum, output) => sum + output.growth, 0) / entry.outputs.length;
                 return meanGrowthPerPlant / lastOutput.num_plants;
             case "yield_per_area":
-                return lastOutput.yield / area;
+                return lastOutput.yield / area*10000;
             case "growth_per_area":
                 const meanGrowthPerArea = entry.outputs.reduce((sum, output) => sum + output.growth, 0) / entry.outputs.length;
-                return meanGrowthPerArea / area;
+                return meanGrowthPerArea / area*10000;
             case "number_of_plants":
                 return lastOutput.num_plants;
             case "growth":
-                return meanGrowth = entry.outputs.reduce((sum, output) => sum + output.growth, 0) / entry.outputs.length;
+                return entry.outputs.reduce((sum, output) => sum + output.growth, 0) / entry.outputs.length;
             default:
-                return lastOutput[yAxisKey]; // For other keys like yield, growth, etc.
+                return lastOutput[yAxisKey];
         }
     });
 
@@ -566,7 +580,7 @@ function plotComparison(allData, yAxisKey) {
     const layout = {
         title: `Comparison of ${yAxisKey.replace('_', ' ')} Across Iterations`,
         xaxis: {
-            title: xKey,
+            title: "Iteration Index",
             showline: true,
             showgrid: true,
             showticklabels: true,
@@ -575,7 +589,7 @@ function plotComparison(allData, yAxisKey) {
             mirror: true
         },
         yaxis: {
-            title: yAxisKey.charAt(0).toUpperCase() + yAxisKey.slice(1).replace('_', ' '),
+            title: titles[yAxisKey] || yAxisKey.charAt(0).toUpperCase() + yAxisKey.slice(1).replace('_', ' '),
             showline: true,
             showgrid: true,
             showticklabels: true,
@@ -591,6 +605,8 @@ function plotComparison(allData, yAxisKey) {
     // Plot the comparison chart using Plotly
     Plotly.newPlot('comparisonPlot', [trace], layout);
 }
+
+
 
     function displayFirstPlot(data, plotId) {
         const dates = data.outputs.map(output => output.date);
@@ -639,7 +655,7 @@ function plotComparison(allData, yAxisKey) {
                 linecolor: 'black' // Color of the axis line
             },
             yaxis: {
-                title: 'Growthrate in (g/TU)',
+                title: 'Growthrate (g/TU)',
                 showgrid: true,
                 zeroline: false,
                 showline: true,
@@ -648,7 +664,7 @@ function plotComparison(allData, yAxisKey) {
                 linecolor: 'black'
             },
             yaxis2: {
-                title: 'Yield in (g)',
+                title: 'Yield (g)',
                 overlaying: 'y',
                 side: 'right',
                 showgrid: true,
@@ -665,139 +681,62 @@ function plotComparison(allData, yAxisKey) {
         Plotly.newPlot(plotId, [growthTrace, yieldTrace], layout1);
     }
     
-
     function displaySecondPlot(data, plotId, plotType) {
         const dates = data.outputs.map(output => output.date);
-        const map = data.outputs.map(output => output.map); 
+        const map = data.outputs.map(output => output.map);
         const area = map[0].length * map[0][0].length;
         let traces = [];
         let layout;
-        
-        switch (plotType) {
-            case "growth":
-                traces.push({
-                    x: dates,
-                    y: data.outputs.map(output => output.growth),
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    name: 'Growthrate in (g/TU)',
-                    line: { color: 'rgb(126,185,48)' }
-                });
-                break;
-            case "yield":
-                traces.push({
-                    x: dates,
-                    y: data.outputs.map(output => output.yield),
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    name: 'Yield in (g)',
-                    line: { color: 'rgb(126,185,48)' }
-                });
-                break;
-            case "growth_per_plant":
-                traces.push({
-                    x: dates,
-                    y: data.outputs.map(output => output.growth / output.num_plants),
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    name: 'Growth per Plant (g/TU)',
-                    line: { color: 'rgb(126,185,48)' }
-                });
-                break;
-            case "yield_per_plant":
-                traces.push({
-                    x: dates,
-                    y: data.outputs.map(output => output.yield / output.num_plants),
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    name: 'Yield per Plant (g)',
-                    line: { color: 'rgb(126,185,48)' }
-                });
-                break;
-            case "growth_per_area":
-                traces.push({
-                    x: dates,
-                    y: data.outputs.map(output => output.growth / area),
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    name: 'Growth per Area (g/m²)',
-                    line: { color: 'rgb(126,185,48)' }
-                });
-                break;
-            case "yield_per_area":
-                traces.push({
-                    x: dates,
-                    y: data.outputs.map(output => output.yield / area),
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    name: 'Yield per Area (g/m²)',
-                    line: { color: 'rgb(126,185,48)' }
-                });
-                break;
-            case "temperature":
-                traces.push({
-                    x: dates,
-                    y: data.outputs.map(output => output.temperature),
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    name: 'Temperature in (°C)',
-                    line: { color: 'rgb(126,185,48)' }
-                });
-                break;
-            case "water":
-                traces.push({
-                    x: dates,
-                    y: data.outputs.map(output => output.water),
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    name: 'Water in (ml)',
-                    line: { color: 'rgb(126,185,48)' }
-                });
-                break;
-            case "overlap":
-                traces.push({
-                    x: dates,
-                    y: data.outputs.map(output => output.overlap),
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    name: 'Overlap in (cm)',
-                    line: { color: 'rgb(126,185,48)' }
-                });
-                break;
-            case "rain":
-                traces.push({
-                    x: dates,
-                    y: data.outputs.map(output => output.rain),
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    name: 'Rain in (mm)',
-                    line: { color: 'rgb(126,185,48)' }
-                });
-                break;
-            case "time_needed":
-                traces.push({
-                    x: dates,
-                    y: data.outputs.map(output => output.time_needed),
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    name: 'Time Needed in (s)',
-                    line: { color: 'rgb(126,185,48)' }
-                });
-                break;
-            case "profit":
-                traces.push({
-                    x: dates,
-                    y: data.outputs.map(output => output.profit),
-                    type: 'scatter',
-                    mode: 'lines+markers',
-                    name: 'profit in (€)',
-                    line: { color: 'rgb(126,185,48)' }
-                });
-                break;
-        }
+    
+        const titles = {
+            "profit_per_plant": "Profit per Plant (€/Plant)",
+            "profit_per_area": "Profit per Area (€/m²)",
+            "yield_per_plant": "Yield per Plant (g/Plant)",
+            "growth_per_plant": "Growth per Plant (g/TU per Plant)",
+            "yield_per_area": "Yield per Area (g/m²)",
+            "growth_per_area": "Growth per Area (g/TU per m²)",
+            "number_of_plants": "Number of Plants",
+            "growth": "Growth (g/TU)",
+            "yield": "Yield (g)",
+            "profit": "Profit (€)",
+            "temperature": "Temperature (°C)",
+            "water": "Water (ml)",
+            "overlap": "Overlap (cm)",
+            "rain": "Rain (mm)",
+            "time_needed": "Time Needed (s)"
+        };
+    
+        // Determine plot title and y-axis title
+        let plotTitle = titles[plotType] || `${plotType.charAt(0).toUpperCase() + plotType.slice(1).replace('_', ' ')}`;
+        let yAxisTitle = titles[plotType] || `${plotType.charAt(0).toUpperCase() + plotType.slice(1).replace('_', ' ')}`;
+    
+        // Define the trace based on plot type
+        let yData = data.outputs.map(output => {
+            switch (plotType) {
+                case "growth_per_plant":
+                case "yield_per_plant":
+                case "profit_per_plant":
+                    return output[plotType] / output.num_plants;
+                case "growth_per_area":
+                case "yield_per_area":
+                case "profit_per_area":
+                    return output[plotType] / area*10000;
+                default:
+                    return output[plotType];
+            }
+        });
+    
+        traces.push({
+            x: dates,
+            y: yData,
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: plotTitle,
+            line: { color: 'rgb(126,185,48)' }
+        });
     
         layout = {
-            title: `${plotType.charAt(0).toUpperCase() + plotType.slice(1).replace('_', ' ')} Over Time`,
+            title: plotTitle + " Over Time",
             xaxis: {
                 title: 'Date',
                 showgrid: true,
@@ -808,7 +747,7 @@ function plotComparison(allData, yAxisKey) {
                 linecolor: 'black'
             },
             yaxis: {
-                title: `${plotType.charAt(0).toUpperCase() + plotType.slice(1).replace('_', ' ')}`,
+                title: yAxisTitle,
                 showgrid: true,
                 zeroline: false,
                 showline: true,
@@ -818,16 +757,12 @@ function plotComparison(allData, yAxisKey) {
             },
             plot_bgcolor: 'white',
             paper_bgcolor: 'white',
-            margin: {t: 40, r: 40, b: 40, l: 40}
+            margin: { t: 40, r: 40, b: 40, l: 40 }
         };
     
         // Clear previous plot
         Plotly.react(plotId, traces, layout);
     }
-    
-    
-    
-
     function displayHeatmap(data, plotId) {
         const heatmapData = data.outputs.map(output => output.map);
         const weed = data.outputs.map(output => output.weed);
@@ -872,7 +807,7 @@ function plotComparison(allData, yAxisKey) {
                         [1,    'rgb(0,100,0)']  // Dark green for higher values up to 50
                     ],
                     colorbar: {
-                        title: 'Plant Density',
+                        title: 'Plant Size',
                         titleside: 'right'
                     }
                 };
@@ -883,7 +818,7 @@ function plotComparison(allData, yAxisKey) {
                     type: 'heatmap',
                     colorscale: 'Hot', // Using a 'Hot' colorscale for differentiation
                     colorbar: {
-                        title: 'Weed Presence',
+                        title: 'Weed Size',
                         titleside: 'left', // Move the colorbar to the left side
                         x: -0.15, // Adjust the x position
                     },
@@ -893,7 +828,7 @@ function plotComparison(allData, yAxisKey) {
                 const layout = {
                     title: `Heatmap on ${dates[index]}`,
                     xaxis: {
-                        title: 'X Axis',
+                        title: 'Width',
                         showgrid: false,
                         zeroline: false,
                         showline: true,
@@ -902,7 +837,7 @@ function plotComparison(allData, yAxisKey) {
                         linecolor: 'black'
                     },
                     yaxis: {
-                        title: 'Y Axis',
+                        title: 'Lenght',
                         showgrid: false,
                         zeroline: false,
                         showline: true,
