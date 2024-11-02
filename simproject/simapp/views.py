@@ -10,10 +10,7 @@ from django.contrib import messages
 from django.urls import reverse
 from django.shortcuts import get_object_or_404
 from .forms import PlantForm
-from django.core.paginator import Paginator
-
-
-
+from django.http import StreamingHttpResponse
 def index(request):
     simulations = DataModelInput.objects.all().values_list('simName', flat=True)
     print(simulations)
@@ -44,24 +41,22 @@ def run_simulation(request):
     except json.JSONDecodeError:
         return HttpResponseBadRequest("Invalid JSON format")
 
+
+
+
+
+from django.http import StreamingHttpResponse
+import json
+
 def get_simulation_data(request):
     simulation_name = request.GET.get('name', None)
-    page = int(request.GET.get('page', 1))
-    page_size = int(request.GET.get('page_size', 2000))
-
+    
     if not simulation_name:
         return JsonResponse({'error': 'No simulation name provided'}, status=400)
-
-    try:
-        # Fetch all iterations linked to the specified simulation name and order by iteration_index
+    
+    def data_generator():
         iterations = SimulationIteration.objects.filter(input__simName=simulation_name).order_by('iteration_index')
-
-        paginator = Paginator(iterations, page_size)
-        page_obj = paginator.get_page(page)
-
-        data_by_iteration = []
-        for iteration in page_obj:
-            outputs = DataModelOutput.objects.filter(iteration=iteration).order_by('date')
+        for iteration in iterations:
             iteration_data = {
                 "iteration_index": iteration.iteration_index,
                 "param_value": iteration.param_value,
@@ -79,23 +74,19 @@ def get_simulation_data(request):
                         "rain": output.rain,
                         "temperature": output.temperature,
                         "num_plants": output.num_plants,
-
                     }
-                    for output in outputs
+                    for output in DataModelOutput.objects.filter(iteration=iteration).order_by('date')
                 ]
             }
-            data_by_iteration.append(iteration_data)
+            yield json.dumps(iteration_data) + '\n'  # Füge eine neue Zeile hinzu
 
-        response_data = {
-            'iterations': data_by_iteration,
-            'has_next': page_obj.has_next(),
-            'total_pages': paginator.num_pages,
-            'current_page': page_obj.number
-        }
+    response = StreamingHttpResponse(data_generator(), content_type="application/x-ndjson")
+    return response
 
-        return JsonResponse(response_data)
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+
+
+
+
 
 
 def plant_list(request):

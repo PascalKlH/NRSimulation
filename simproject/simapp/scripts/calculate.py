@@ -169,9 +169,9 @@ class Crop:
         '''
         h = 32 # This could represent the asymptotic maximum size or similar scale factor
         r = 0.0095#/self.sim.stepsize # This could represent the growth rate or similar factor
-        m = 2.077# This could represent the curvature or similar factor
+        m = 2.477# This could represent the curvature or similar factor
         x = t_diff_hours
-        b= 35#855/self.sim.stepsize # This could represent the initial size or similar factor
+        b= 10#855/self.sim.stepsize # This could represent the initial size or similar factor
         growth_rate=(h*b*r)/(m-1)*np.exp(-r*x)*(1+b*np.exp(-r*x))**(m/(1-m))
         #get the betrag of the growth rate
         growth_rate = abs(growth_rate*self.sim.stepsize)*self.overlap
@@ -908,7 +908,7 @@ class Simulation:
 
     def record_data(self,time_needed,iteration_instance,total_growthrate,total_overlap):
         index_where = np.where(self.crops_pos_layer > 0)  
-        yields = np.sum(self.crop_size_layer[index_where])*11
+        yields = np.sum(self.crop_size_layer[index_where])#*11
         num_plants = np.sum(self.crops_pos_layer)
         profit = yields *self.strips[0].plant_parameters["revenue"]*0.001-0.05*self.strips[0].num_plants
         #self.strips[0].plant_parameters["planting_cost"]
@@ -934,9 +934,8 @@ class Simulation:
         )
         output_instance.set_data(data)
         output_instance.save()
-
         # CSV file path (same directory as this script)
-        csv_file_path = os.path.join(os.path.dirname(__file__), 'r130.csv')
+        csv_file_path = os.path.join(os.path.dirname(__file__), 'tets.csv')
 
         # Check if file exists to write headers
         file_exists = os.path.isfile(csv_file_path)
@@ -1079,7 +1078,7 @@ def handle_row_variations(input_data, input_instance, weather_data):
         modified_input_data = create_modified_input_data(input_data, row_index)
         iteration_instance = create_iteration_instance(input_instance, row_index, -99)
         run_simulation(modified_input_data, weather_data, iteration_instance)
-
+    print("All row variations processed.")
 def handle_parameter_variations(input_data, input_instance, weather_data):
     """
     Processes parameter variations for testing mode.
@@ -1094,7 +1093,7 @@ def handle_parameter_variations(input_data, input_instance, weather_data):
         modified_input_data = modify_input_data_for_parameter(input_data, testing_key, param_value)
         iteration_instance = create_iteration_instance(input_instance, param_value, param_value)
         run_simulation(modified_input_data, weather_data, iteration_instance)
-
+    print("All variations processed.")
 def run_standard_simulation(input_data, input_instance, weather_data):
     """
     Runs a standard simulation when not in testing mode.

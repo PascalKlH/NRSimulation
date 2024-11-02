@@ -365,31 +365,55 @@ document.addEventListener('DOMContentLoaded', function () {
         .catch(error => {
             console.error('Error:', error);
         });
-        function fetchSimulationData(simulationName, page = 1, pageSize = 2000) {
-            fetch(`/api/get_simulation_data/?name=${encodeURIComponent(simulationName)}&page=${page}&page_size=${pageSize}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log(data.iterations);
-                    setupCarousel(data.iterations);
-                    setupComparisonPlot(data.iterations);
+        async function fetchSimulationData(simulationName) {
+            try {
+                const response = await fetch(`/api/get_simulation_data/?name=${encodeURIComponent(simulationName)}`);
         
-                    // If there is a next page, fetch it recursively
-                    if (data.has_next) {
-                        fetchSimulationData(simulationName, page + 1, pageSize);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+        
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+                let jsonText = '';
+                let accumulatedData = [];
+        
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+        
+                    jsonText += decoder.decode(value, { stream: true });
+        
+                    // Zeilenweise trennen, um vollständige JSON-Objekte zu finden
+                    const lines = jsonText.split('\n');
+                    jsonText = lines.pop(); // Letzte (unvollständige) Zeile behalten
+        
+                    for (let line of lines) {
+                        if (line.trim()) {  // Leere Zeilen ignorieren
+                            try {
+                                const parsedItem = JSON.parse(line);
+                                accumulatedData.push(parsedItem); // Füge jedes Objekt zur Liste hinzu
+                            } catch (e) {
+                                console.warn("Fehler beim Parsen von NDJSON:", e);
+                            }
+                        }
                     }
-                })
-                .catch(error => {
-                    console.error('Failed to fetch:', error);
-                });
+                }
+        
+                // Verarbeite die gesammelten Daten
+                setupCarousel(accumulatedData);
+                setupComparisonPlot(accumulatedData);
+        
+            } catch (error) {
+                console.error('Failed to fetch NDJSON data:', error);
+            }
         }
         
-       
         
+        
+        
+            
+    
     function setupCarousel(allData) {
         // Elements for each carousel
         const carouselElement1 = document.getElementById('carouselExampleCaptions1');
@@ -424,7 +448,6 @@ document.addEventListener('DOMContentLoaded', function () {
     
         function updateAllSecondCarouselPlots(plotType, allData) {
             const allPlot2Elements = document.querySelectorAll('[id^="plot2_"]');
-            console.log(`Updating ${allPlot2Elements.length} plots with type ${plotType}`);
         
             allPlot2Elements.forEach((plotContainer, index) => {
                 const plotId = plotContainer.id; // Ensure IDs are unique and correctly assigned
@@ -508,11 +531,17 @@ function plotComparison(allData, yAxisKey) {
             case "yield_per_plant":
                 return lastOutput.yield / lastOutput.num_plants;
             case "growth_per_plant":
-                return lastOutput.growth / lastOutput.num_plants;
+                const meanGrowthPerPlant = entry.outputs.reduce((sum, output) => sum + output.growth, 0) / entry.outputs.length;
+                return meanGrowthPerPlant / lastOutput.num_plants;
             case "yield_per_area":
                 return lastOutput.yield / area;
             case "growth_per_area":
-                return lastOutput.growth / area;
+                const meanGrowthPerArea = entry.outputs.reduce((sum, output) => sum + output.growth, 0) / entry.outputs.length;
+                return meanGrowthPerArea / area;
+            case "number_of_plants":
+                return lastOutput.num_plants;
+            case "growth":
+                return meanGrowth = entry.outputs.reduce((sum, output) => sum + output.growth, 0) / entry.outputs.length;
             default:
                 return lastOutput[yAxisKey]; // For other keys like yield, growth, etc.
         }
