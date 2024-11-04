@@ -581,9 +581,9 @@ class Strip:
 
     def _alternating_planting(self, strip_parameters, start_col, end_col, plant_parameters, sim):
         """
-        Plant the crops in an alternating pattern, avoiding edges
+        Plant the crops in an alternating pattern with a customizable column spacing.
         """
-        plant_distance = strip_parameters["rowDistance"]
+        plant_distance = 60  # Set the distance between columns to 40
         row_length = strip_parameters["rowLength"]
 
         # Use half the plant distance as offset to avoid planting at the edges
@@ -593,10 +593,10 @@ class Strip:
         col_start = start_col + offset
         col_end = end_col - offset
 
-        # Create grid indices for odd and even rows
-        row_indices = np.arange(row_start, row_end, plant_distance)
+        # Create grid indices for rows
+        row_indices = np.arange(row_start, row_end, strip_parameters["rowDistance"])
         col_indices_odd = np.arange(col_start, col_end, plant_distance)
-        col_indices_even = col_indices_odd + plant_distance // 2
+        col_indices_even = col_indices_odd + offset
 
         # Clip the indices to stay within bounds
         col_indices_even = col_indices_even[col_indices_even < col_end]
@@ -606,11 +606,11 @@ class Strip:
         row_grid_odd = row_indices[::2]
         row_grid_even = row_indices[1::2]
 
-
-
         # Apply planting to odd and even rows
         self.apply_planting(row_grid_odd, col_indices_odd, plant_parameters, sim)
         self.apply_planting(row_grid_even, col_indices_even, plant_parameters, sim)
+
+
 
 
     def _random_planting(self,strip_parameters, start_col, end_col, plant_parameters, sim):
@@ -618,7 +618,7 @@ class Strip:
         Plant the crops in a random pattern
         """
         num_plants = int(
-            (strip_parameters["rowLength"] * (end_col - start_col) )/(strip_parameters["rowDistance"]*40)
+            (strip_parameters["rowLength"] * (end_col - start_col) )/(strip_parameters["rowDistance"]*100)
 
         )
         offset = 40 // 2
